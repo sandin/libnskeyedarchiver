@@ -8,6 +8,9 @@ using namespace nskeyedarchiver;
 void read_content_from_file(const char* filename, char** buffer,
                             size_t* buffer_size) {
   FILE* f = fopen(filename, "rb");
+  if (!f) {
+    return;
+  }
   struct stat filestats;
   stat(filename, &filestats);
   *buffer_size = filestats.st_size;
@@ -18,9 +21,17 @@ void read_content_from_file(const char* filename, char** buffer,
 
 // Demonstrate some basic assertions.
 TEST(NSKeyedUnarchiverTest, Unarchive) {
-  char* buffer;
-  size_t buffer_size;
-  read_content_from_file("./test/data/setconfig.bplist", &buffer, &buffer_size);
+  char* buffer = nullptr;
+  size_t buffer_size = 0;
+  const char* filename = "../test/data/setconfig.bplist";
+  read_content_from_file(filename, &buffer, &buffer_size);
+  if (buffer == nullptr) {
+    printf("can not read %s file\n", filename);
+    EXPECT_TRUE(false);
+    return;
+  }
+  printf("buffer=0x%X, buffer_size=%zu\n", (void*)buffer, buffer_size);
+  EXPECT_EQ(1032, buffer_size);
 
   NSKeyedUnarchiver* unarchiver = new NSKeyedUnarchiver();
   NSObject* obj = unarchiver->Unarchive(buffer, (uint32_t)buffer_size);

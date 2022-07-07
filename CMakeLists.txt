@@ -14,17 +14,23 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # libplist
+if (NOT DEFINED ENV{IMB_PKG_CONFIG_PATH})
+    message(FATAL_ERROR "not defined env var: IMB_PKG_CONFIG_PATH for imobiledevice") # "../perfcat_build_scripts/built/darwin-arm64/lib/pkgconfig"
+endif()
 set(ENV{PKG_CONFIG_PATH} $ENV{IMB_PKG_CONFIG_PATH})
 find_package(PkgConfig)
 pkg_check_modules(plist REQUIRED IMPORTED_TARGET libplist-2.0)
-include_directories(${imobiledevice_INCLUDE_DIRS} ${plist_INCLUDE_DIRS})
+include_directories(${plist_INCLUDE_DIRS})
 
 # library: nskeyedarchiver
 include_directories("./include")
-add_library(${PROJECT_NAME} nskeyedarchiver.cpp)
+set(SOURCES 
+  src/nskeyedunarchiver.cpp
+)
+add_library(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(
   ${PROJECT_NAME}
-  PkgConfig::libplist
+  PkgConfig::plist
 )
 
 # test
