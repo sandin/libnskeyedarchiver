@@ -19,23 +19,80 @@ void read_content_from_file(const char* filename, char** buffer,
   fclose(f);
 }
 
-// Demonstrate some basic assertions.
+#define READ_CONTENT_FROM_FILE(f) do { \
+  read_content_from_file(f, &buffer, &buffer_size); \
+  if (buffer == nullptr) { \
+    printf("can not read %s file\n", f); \
+    EXPECT_TRUE(false); \
+    return; \
+  } \
+  printf("buffer=%p, buffer_size=%zu\n", static_cast<void*>(buffer), buffer_size); \
+} while (0) 
+
+/*
 TEST(NSKeyedUnarchiverTest, UnarchiveTopLevelObjectWithData) {
-  char* buffer = nullptr;
-  size_t buffer_size = 0;
-  const char* filename = "../test/data/setconfig.bplist";
-  read_content_from_file(filename, &buffer, &buffer_size);
-  if (buffer == nullptr) {
-    printf("can not read %s file\n", filename);
-    EXPECT_TRUE(false);
-    return;
-  }
-  printf("buffer=0x%p, buffer_size=%zu\n", static_cast<void*>(buffer), buffer_size);
-  EXPECT_EQ(1032, buffer_size);
+  char* buffer = nullptr; \
+  size_t buffer_size = 0; \
+  READ_CONTENT_FROM_FILE("../test/data/setconfig.bplist");
 
   NSObject* obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(
       buffer, (uint32_t)buffer_size);
-  EXPECT_TRUE(obj != nullptr);
+  ASSERT_TRUE(obj != nullptr);
+
+  if (obj) {
+    delete obj;
+  }
+}
+*/
+
+TEST(NSKeyedUnarchiverTest, DecodeString) {
+  char* buffer = nullptr; \
+  size_t buffer_size = 0; \
+  READ_CONTENT_FROM_FILE("../test/data/str_setconfig.bplist");
+
+  NSVariant* obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(
+      buffer, (uint32_t)buffer_size);
+  ASSERT_TRUE(obj != nullptr);
+  EXPECT_EQ(obj->DataType(), NSVariant::Type::String);
+  std::string val = obj->ToString();
+  printf("val=%s\n", val.c_str());
+  EXPECT_EQ(val, "setConfig:");
+
+  if (obj) {
+    delete obj;
+  }
+}
+
+TEST(NSKeyedUnarchiverTest, DecodeUInt) {
+  char* buffer = nullptr; \
+  size_t buffer_size = 0; \
+  READ_CONTENT_FROM_FILE("../test/data/uint_10.bplist");
+
+  NSVariant* obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(
+      buffer, (uint32_t)buffer_size);
+  ASSERT_TRUE(obj != nullptr);
+  EXPECT_EQ(obj->DataType(), NSVariant::Type::UInt);
+  uint64_t val = obj->ToUInt();
+  printf("val=%llu\n", val);
+  EXPECT_EQ(val, 10);
+
+  if (obj) {
+    delete obj;
+  }
+}
+
+TEST(NSKeyedUnarchiverTest, DecodeBool) {
+  char* buffer = nullptr; \
+  size_t buffer_size = 0; \
+  READ_CONTENT_FROM_FILE("../test/data/bool_true.bplist");
+
+  NSVariant* obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(
+      buffer, (uint32_t)buffer_size);
+  ASSERT_TRUE(obj != nullptr);
+  EXPECT_EQ(obj->DataType(), NSVariant::Type::Bool);
+  bool val = obj->ToBool();
+  printf("val=%llu\n", val);
+  EXPECT_EQ(val, true);
 
   if (obj) {
     delete obj;

@@ -25,6 +25,7 @@ include_directories(${plist_INCLUDE_DIRS})
 # library: nskeyedarchiver
 include_directories("./include")
 set(SOURCES 
+  src/nsvariant.cpp
   src/nskeyedunarchiver.cpp
 )
 add_library(${PROJECT_NAME} ${SOURCES})
