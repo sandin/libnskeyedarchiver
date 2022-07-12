@@ -11,19 +11,19 @@
 
 #define LOG_LEVEL 2
 #if LOG_LEVEL >= 0
-#define LOG_ERROR(...) printf("ERROR: " __VA_ARGS__)
+#define LOG_ERROR(fmt, ...) printf("ERROR: %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
-#define LOG_ERROR(...)
+#define LOG_ERROR(fmt, ...)
 #endif
 #if LOG_LEVEL >= 1
-#define LOG_INFO(...) printf("INFO: " __VA_ARGS__)
+#define LOG_INFO(fmt, ...) printf("INFO: %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
-#define LOG_INFO(...)
+#define LOG_INFO(fmt, ...)
 #endif
 #if LOG_LEVEL >= 2
-#define LOG_DEBUG(...) printf("DEBUG: " __VA_ARGS__)
+#define LOG_DEBUG(fmt, ...) printf("DEBUG: %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
-#define LOG_DEBUG(...)
+#define LOG_DEBUG(fmt, ...)
 #endif
 
 inline void print_plist_as_xml(plist_t node) {

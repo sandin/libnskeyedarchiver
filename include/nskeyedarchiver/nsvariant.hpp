@@ -5,11 +5,12 @@
 
 #include <string>
 
-#include "nskeyedarchiver/nscoding.hpp"
+#include "nskeyedarchiver/nsclass.hpp"
+#include "nskeyedarchiver/nsobject.hpp"
 
 namespace nskeyedarchiver {
 
-class NSVariant : public NSCoding {
+class NSVariant : public NSObject {
  public:
   enum class Type {
     Bool,
@@ -35,11 +36,11 @@ class NSVariant : public NSCoding {
   bool ToBool() const { return data_.b; }
   uint64_t ToUInt() const { return data_.u; }
   double ToDouble() const { return data_.d; }
-  std::string ToString() const { return std::string(data_.s); }  // copy
 
   Type DataType() const { return type_; }
 
   virtual bool Decode(NSKeyedUnarchiver* decoder);
+  virtual std::string ToString() const;
 
  private:
   union Data {
@@ -50,6 +51,8 @@ class NSVariant : public NSCoding {
   } data_;
   Type type_;
 };
+
+DECLARE_NSCLASS(NSVariant);
 
 }  // namespace nskeyedarchiver
 

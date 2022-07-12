@@ -28,15 +28,17 @@ inline static std::string get_string_from_plist(plist_t node) {
 }
 
 // static
-NSVariant* NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(const char* data,
+NSObject* NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(const char* data,
                                                               size_t length) {
-  NSKeyedUnarchiver unarchiver(data, length);
-  NSVariant* object = static_cast<NSVariant*>(
-      unarchiver.DecodeObject(NSKeyedArchiveRootObjectKey));
+  NSClassFactory& class_factory = NSClassFactory::GetInstance();
+  NSKeyedUnarchiver unarchiver(&class_factory, data, length);
+  NSObject* object = unarchiver.DecodeObject(NSKeyedArchiveRootObjectKey);
   return object;
 }
 
-NSKeyedUnarchiver::NSKeyedUnarchiver(const char* data, size_t length) {
+NSKeyedUnarchiver::NSKeyedUnarchiver(NSClassFactory* class_factory,
+                                     const char* data, size_t length)
+    : class_factory_(class_factory) {
   plist_t plist = nullptr;
   plist_from_bin(data, length, &plist);
   if (plist == nullptr) {
@@ -91,18 +93,20 @@ NSKeyedUnarchiver::~NSKeyedUnarchiver() {
   }
 }
 
-NSCoding* NSKeyedUnarchiver::DecodeObject(const char* key) {
+NSObject* NSKeyedUnarchiver::DecodeObject(std::string key) {
   plist_t node = ObjectInCurrentDecodingContext(key);
+  LOG_DEBUG("depth=%d, key=%s\n", CurrentDecodingContextDepth(), key.c_str());
   if (node == nullptr) {
-    LOG_ERROR("No value found for key `%s`. The data may be corrupt.\n", key);
+    LOG_ERROR("No value found for key `%s`. The data may be corrupt.\n",
+              key.c_str());
     return nullptr;
   }
 
   return DecodeObject(node);
 }
 
-NSCoding* NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
-  NSCoding* object = nullptr;
+NSObject* NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
+  NSObject* object = nullptr;
 
   if (!PLIST_IS_UID(object_ref)) {
     LOG_ERROR("Object is not a reference. The data may be corrupt.\n");
@@ -114,6 +118,9 @@ NSCoding* NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
     LOG_ERROR("Invalid object reference {TODO}. The data may be corrupt.\n");
     return object;
   }
+  //#if DEBUG
+  //  print_plist_as_xml(dereferenced_object);
+  //#endif
 
   if (PLIST_IS_STRING(dereferenced_object) &&
       plist_string_val_compare(dereferenced_object,
@@ -138,17 +145,29 @@ NSCoding* NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
         LOG_ERROR("Invalid class reference {TODO}. The data may be corrupt.\n");
         return nullptr;
       }
+      LOG_DEBUG("classname: %s\n", class_to_construct->ClassName().c_str());
 
       DecodingContext* inner_decoding_context = new DecodingContext(
           dereferenced_object);  // dereferenced_object is a dict
       PushDecodingContext(inner_decoding_context);
       auto guard = make_scope_exit([&]() { PopDecodingContext(); });
 
+      object = class_to_construct->NewInstance();
+      if (!object->Decode(this)) {
+        LOG_ERROR("Can not decode object of %s class.\n",
+                  class_to_construct->ClassName().c_str());
+        delete object;
+        object = nullptr;
+      }
+
       // TODO:
       // CacheObject(object_ref, object);
+    } else {
+      LOG_DEBUG("cached object.class = %s.\n",
+                object->GetClass()->ClassName().c_str());
     }
   } else {
-    LOG_DEBUG("Not Container\n");
+    LOG_DEBUG("Is Primitive\n");
     object = DecodePrimitive(dereferenced_object);
     if (object == nullptr) {
       LOG_ERROR("Can not decode primitive type object.\n");
@@ -161,24 +180,43 @@ NSCoding* NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
 }
 
 NSVariant* NSKeyedUnarchiver::DecodePrimitive(plist_t dereferenced_object) {
+  NSClass* clazz =
+      class_factory_->ClassForName("NSVariant");  // TODO: make it simple
+
   plist_type type = plist_get_node_type(dereferenced_object);
   switch (type) {
-    case PLIST_BOOLEAN:
+    case PLIST_BOOLEAN: {
       uint8_t b;
       plist_get_bool_val(dereferenced_object, &b);
-      return new NSVariant(static_cast<bool>(b));
-    case PLIST_UINT:
+      LOG_DEBUG("val=%d\n", b);
+      NSVariant* obj = new NSVariant(static_cast<bool>(b));
+      obj->SetClass(clazz);
+      return obj;
+    }
+    case PLIST_UINT: {
       uint64_t u;
       plist_get_uint_val(dereferenced_object, &u);
-      return new NSVariant(u);
-    case PLIST_REAL:
+      LOG_DEBUG("val=%llu\n", u);
+      NSVariant* obj = new NSVariant(u);
+      obj->SetClass(clazz);
+      return obj;
+    }
+    case PLIST_REAL: {
       double d;
       plist_get_real_val(dereferenced_object, &d);
-      return new NSVariant(d);
-    case PLIST_STRING:
+      LOG_DEBUG("val=%f\n", d);
+      NSVariant* obj = new NSVariant(d);
+      obj->SetClass(clazz);
+      return obj;
+    }
+    case PLIST_STRING: {
       char* c;
       plist_get_string_val(dereferenced_object, &c);
-      return new NSVariant(c);
+      LOG_DEBUG("val=%s\n", c);
+      NSVariant* obj = new NSVariant(c);
+      obj->SetClass(clazz);
+      return obj;
+    }
     case PLIST_ARRAY:
     case PLIST_DICT:
     case PLIST_DATE:
@@ -204,14 +242,14 @@ bool NSKeyedUnarchiver::IsContainer(plist_t node) {
 plist_t NSKeyedUnarchiver::DereferenceObject(plist_t object_ref) {
   uint64_t uid = 0;
   plist_get_uid_val(object_ref, &uid);
-  LOG_DEBUG("uid=%llu, objects_size_=%u\n", uid, objects_size_);
+  LOG_DEBUG("deref obj, uid=%llu, objects_size_=%u\n", uid, objects_size_);
   if (0 <= uid && uid < objects_size_) {
     return plist_array_get_item(objects_, uid);
   }
   return nullptr;
 }
 
-NSCoding* NSKeyedUnarchiver::CachedObjectForReference(plist_t object_ref) {
+NSObject* NSKeyedUnarchiver::CachedObjectForReference(plist_t object_ref) {
   uint64_t uid = 0;
   plist_get_uid_val(object_ref, &uid);
 
@@ -287,11 +325,12 @@ bool NSKeyedUnarchiver::ValidateAndMapClassDictionary(
 
   // TODO: Do we need to impl NSKeyedUnarchiverDelegate?
 
+  LOG_ERROR("`%s` is not valid classname.\n", asserted_classname.c_str());
   return false;
 }
 
 AnyClass* NSKeyedUnarchiver::ClassForClassName(std::string classname) {
-  return nullptr;  // TODO
+  return class_factory_->ClassForName(classname);
 }
 
 bool NSKeyedUnarchiver::IsClassAllowed(
@@ -329,7 +368,8 @@ plist_t NSKeyedUnarchiver::ObjectInCurrentDecodingContext(std::string key) {
   } else {
     unwrapped_key = NextGenericKey();
   }
-  printf("key=%s, unwrapped_key=%s\n", key.c_str(), unwrapped_key.c_str());
+  // LOG_DEBUG("key=%s, unwrapped_key=%s\n", key.c_str(),
+  // unwrapped_key.c_str());
 
   DecodingContext* ctx = CurrentDecodingContext();
   if (ctx != nullptr) {
@@ -346,6 +386,10 @@ DecodingContext* NSKeyedUnarchiver::CurrentDecodingContext() {
   return nullptr;
 }
 
+int NSKeyedUnarchiver::CurrentDecodingContextDepth() {
+  return containers_.size();
+}
+
 void NSKeyedUnarchiver::PushDecodingContext(DecodingContext* decoding_context) {
   containers_.push(decoding_context);
 }
@@ -354,4 +398,50 @@ void NSKeyedUnarchiver::PopDecodingContext() {
   DecodingContext* ctx = containers_.top();
   containers_.pop();
   delete ctx;
+}
+
+plist_t NSKeyedUnarchiver::DecodeValue(std::string key) {
+  return ObjectInCurrentDecodingContext(key);
+}
+
+bool NSKeyedUnarchiver::ContainsValue(std::string key) {
+  plist_t val = DecodeValue(key);
+  return val != nullptr;
+}
+
+std::vector<NSObject*> NSKeyedUnarchiver::DecodeArrayOfObjectsForKey(
+    std::string key) {
+  std::vector<NSObject*> array;
+  plist_t object_refs = DecodeValue(key);
+
+  if (PLIST_IS_ARRAY(object_refs)) {
+    plist_array_iter it;
+    plist_array_new_iter(object_refs, &it);
+    plist_t item_node;
+    do {
+      item_node = nullptr;
+      plist_array_next_item(object_refs, it, &item_node);
+
+      if (PLIST_IS_UID(item_node)) {
+        NSObject* object = DecodeObject(item_node);
+        array.emplace_back(object);
+      }
+    } while (item_node);
+    free(it);
+  }
+
+  return array;
+}
+
+std::string NSKeyedUnarchiver::DecodeString(std::string key) {
+  plist_t value_node = DecodeValue(key);
+  if (PLIST_IS_STRING(value_node)) {
+    char* c;
+    plist_get_string_val(value_node, &c);
+    std::string str = c;
+    delete c;
+    return str;
+  }
+  LOG_ERROR("%s is not a string, node_type=%d\n", key.c_str(), plist_get_node_type(value_node));
+  return ""; // TODO: throw exception?
 }

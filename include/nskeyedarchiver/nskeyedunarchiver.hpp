@@ -5,11 +5,13 @@
 
 #include <stack>
 #include <string>
+#include <vector>
 #include <unordered_map>
 
-#include "nskeyedarchiver/nscoding.hpp"
-#include "nskeyedarchiver/nsvariant.hpp"
 #include "plist/plist.h"
+#include "nskeyedarchiver/nsobject.hpp"
+#include "nskeyedarchiver/nsvariant.hpp"
+#include "nskeyedarchiver/nsclassfactory.hpp"
 
 namespace nskeyedarchiver {
 
@@ -20,30 +22,31 @@ struct DecodingContext {
   DecodingContext(plist_t in_dict) : dict(in_dict), generic_key(0) {}
 };
 
-struct AnyClass {
-  std::string class_name;
-};
-
 class NSKeyedUnarchiver {
  public:
   using ClassMap = std::unordered_map<uint64_t, AnyClass*>;
-  using ObjectMap = std::unordered_map<uint64_t, NSCoding*>;
+  using ObjectMap = std::unordered_map<uint64_t, NSObject*>;
 
-  NSKeyedUnarchiver(const char* data, size_t length);
+  NSKeyedUnarchiver(NSClassFactory* class_factory, const char* data, size_t length);
   virtual ~NSKeyedUnarchiver();
 
-  NSCoding* DecodeObject(const char* key);
+  NSObject* DecodeObject(std::string key);
+  bool ContainsValue(std::string key);
+  std::vector<NSObject*> DecodeArrayOfObjectsForKey(std::string key); 
+  std::string DecodeString(std::string key);
 
-  static NSVariant* UnarchiveTopLevelObjectWithData(const char* data,
+  static NSObject* UnarchiveTopLevelObjectWithData(const char* data,
                                                     size_t length);
 
  private:
   NSVariant* DecodePrimitive(plist_t dereferenced_object);
-  NSCoding* DecodeObject(plist_t object_ref);
+  NSObject* DecodeObject(plist_t object_ref);
+  plist_t DecodeValue(std::string key);
   plist_t DereferenceObject(plist_t object_ref);
-  NSCoding* CachedObjectForReference(plist_t object_ref);
+  NSObject* CachedObjectForReference(plist_t object_ref);
 
   DecodingContext* CurrentDecodingContext();
+  int CurrentDecodingContextDepth();
   plist_t ObjectInCurrentDecodingContext(std::string key);
   void PushDecodingContext(DecodingContext* decoding_context);
   void PopDecodingContext();
@@ -68,6 +71,7 @@ class NSKeyedUnarchiver {
   ObjectMap object_ref_map_;
   ClassMap allowed_classes_;
   ClassMap classes_;
+  NSClassFactory* class_factory_;
 
 };  // class NSKeyedUnarchiver
 

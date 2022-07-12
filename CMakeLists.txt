@@ -26,6 +26,12 @@ include_directories(${plist_INCLUDE_DIRS})
 include_directories("./include")
 set(SOURCES 
   src/nsvariant.cpp
+  src/nsclassfactory.cpp
+  src/nsdictionary.cpp
+  src/nsarray.cpp
+  src/nsset.cpp
+  src/nsstring.cpp
+
   src/nskeyedunarchiver.cpp
 )
 add_library(${PROJECT_NAME} ${SOURCES})
