@@ -9,7 +9,7 @@ using namespace nskeyedarchiver;
 
 bool NSString::Decode(NSKeyedUnarchiver* decoder) {
   if (!decoder->ContainsValue("NS.string")) {
-    LOG_ERROR("NSDictionary, missing NS.string.\n");
+    LOG_ERROR("missing NS.string.\n");
     return false;
   }
 

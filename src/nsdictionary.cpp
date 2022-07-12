@@ -8,8 +8,12 @@
 using namespace nskeyedarchiver;
 
 bool NSDictionary::Decode(NSKeyedUnarchiver* decoder) {
+  if (!decoder->ContainsValue("NS.keys")) {
+    LOG_ERROR("missing NS.keys.\n");
+    return false;
+  }
   if (!decoder->ContainsValue("NS.objects")) {
-    LOG_ERROR("NSDictionary, missing NS.objects.\n");
+    LOG_ERROR("missing NS.objects.\n");
     return false;
   }
 
@@ -20,7 +24,7 @@ bool NSDictionary::Decode(NSKeyedUnarchiver* decoder) {
   size_t keys_size = keys.size();
   size_t values_size = values.size();
   if (keys_size != values_size) {
-    LOG_ERROR("values size(%lu) smaller then keys size(%lu).\n", values_size,
+    LOG_ERROR("values size(%lu) and keys size(%lu) are not equal.\n", values_size,
               keys_size);
     return false;
   }
@@ -28,7 +32,7 @@ bool NSDictionary::Decode(NSKeyedUnarchiver* decoder) {
   for (int i = 0; i < keys_size; ++i) {
     NSObject* key = keys[i];
     NSObject* value = values[i];
-    // if (key != nullptr) { // allow nullptr
+    // if (key != nullptr) { // null is not allowed
     items_[key] = value;
     //}
   }

@@ -9,7 +9,7 @@ using namespace nskeyedarchiver;
 
 bool NSSet::Decode(NSKeyedUnarchiver* decoder) {
   if (!decoder->ContainsValue("NS.objects")) {
-    LOG_ERROR("NSDictionary, missing NS.objects.\n");
+    LOG_ERROR("missing NS.objects.\n");
     return false;
   }
 
