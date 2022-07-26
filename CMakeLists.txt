@@ -24,17 +24,22 @@ include_directories(${plist_INCLUDE_DIRS})
 
 # library: nskeyedarchiver
 include_directories("./include")
+set(HEADERS
+  include/nskeyedarchiver/common.h
+  include/nskeyedarchiver/kaarray.hpp
+  include/nskeyedarchiver/kamap.hpp
+  include/nskeyedarchiver/kaobject.hpp
+  include/nskeyedarchiver/kastring.hpp
+  include/nskeyedarchiver/kavalue.hpp
+  include/nskeyedarchiver/nsclassmanager.hpp
+  include/nskeyedarchiver/nskeyedunarchiver.hpp
+  include/nskeyedarchiver/scope.h
+)
 set(SOURCES 
-  src/nsvariant.cpp
-  src/nsclassfactory.cpp
-  src/nsdictionary.cpp
-  src/nsarray.cpp
-  src/nsset.cpp
-  src/nsstring.cpp
-
+  src/nsclassmanager.cpp
   src/nskeyedunarchiver.cpp
 )
-add_library(${PROJECT_NAME} ${SOURCES})
+add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES})
 target_link_libraries(
   ${PROJECT_NAME}
   PkgConfig::plist
@@ -45,6 +50,11 @@ enable_testing()
 add_executable(
   ${PROJECT_NAME}_test
   test/nskeyedunarchiver_test.cpp
+  test/kavalue_test.cpp
+  test/kaobject_test.cpp
+  test/kaarray_test.cpp
+  test/kamap_test.cpp
+  test/kastring_test.cpp
 )
 target_link_libraries(
   ${PROJECT_NAME}_test
@@ -55,3 +65,8 @@ include(GoogleTest)
 gtest_discover_tests(${PROJECT_NAME}_test)
 
 
+# asan
+#target_compile_options(${PROJECT_NAME} PUBLIC -fsanitize=address -fno-omit-frame-pointer)
+#set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -fsanitize=address)
+#target_compile_options(${PROJECT_NAME}_test PUBLIC -fsanitize=address -fno-omit-frame-pointer)
+#set_target_properties(${PROJECT_NAME}_test PROPERTIES LINK_FLAGS -fsanitize=address)

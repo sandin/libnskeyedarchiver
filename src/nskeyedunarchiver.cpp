@@ -3,8 +3,8 @@
 #include <cstdlib>  // for free
 #include <cstring>  // for strcmp
 
-#include "common.h"
-#include "scope.h"
+#include "nskeyedarchiver/common.h"
+#include "nskeyedarchiver/scope.h"
 
 using namespace nskeyedarchiver;
 
@@ -28,17 +28,16 @@ inline static std::string get_string_from_plist(plist_t node) {
 }
 
 // static
-NSObject* NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(const char* data,
+KAValue NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(const char* data,
                                                               size_t length) {
-  NSClassFactory& class_factory = NSClassFactory::GetInstance();
-  NSKeyedUnarchiver unarchiver(&class_factory, data, length);
-  NSObject* object = unarchiver.DecodeObject(NSKeyedArchiveRootObjectKey);
-  return object;
+  NSClassManager& class_manager = NSClassManager::GetInstance();
+  NSKeyedUnarchiver unarchiver(&class_manager, data, length);
+  return unarchiver.DecodeObject(NSKeyedArchiveRootObjectKey);
 }
 
-NSKeyedUnarchiver::NSKeyedUnarchiver(NSClassFactory* class_factory,
+NSKeyedUnarchiver::NSKeyedUnarchiver(NSClassManager* class_factory,
                                      const char* data, size_t length)
-    : class_factory_(class_factory) {
+    : class_manager_(class_factory) {
   plist_t plist = nullptr;
   plist_from_bin(data, length, &plist);
   if (plist == nullptr) {
@@ -91,32 +90,37 @@ NSKeyedUnarchiver::~NSKeyedUnarchiver() {
     plist_free(plist_);
     plist_ = nullptr;
   }
+  while (!containers_.empty()) {
+    const DecodingContext* ctx = containers_.top();
+    if (ctx) {
+      delete ctx;
+    }
+    containers_.pop();
+  }
 }
 
-NSObject* NSKeyedUnarchiver::DecodeObject(std::string key) {
+KAValue NSKeyedUnarchiver::DecodeObject(std::string key) {
   plist_t node = ObjectInCurrentDecodingContext(key);
   LOG_DEBUG("depth=%d, key=%s\n", CurrentDecodingContextDepth(), key.c_str());
   if (node == nullptr) {
     LOG_ERROR("No value found for key `%s`. The data may be corrupt.\n",
               key.c_str());
-    return nullptr;
+    return KAValue(); // null
   }
 
   return DecodeObject(node);
 }
 
-NSObject* NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
-  NSObject* object = nullptr;
-
+KAValue NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
   if (!PLIST_IS_UID(object_ref)) {
     LOG_ERROR("Object is not a reference. The data may be corrupt.\n");
-    return object;
+    return KAValue(); // null
   }
 
   plist_t dereferenced_object = DereferenceObject(object_ref);
   if (dereferenced_object == nullptr) {
     LOG_ERROR("Invalid object reference {TODO}. The data may be corrupt.\n");
-    return object;
+    return KAValue(); // null
   }
   //#if DEBUG
   //  print_plist_as_xml(dereferenced_object);
@@ -125,97 +129,60 @@ NSObject* NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
   if (PLIST_IS_STRING(dereferenced_object) &&
       plist_string_val_compare(dereferenced_object,
                                NSKeyedArchiveNullObjectReferenceName) == 0) {
-    return object;  // It's `$null`
+    return KAValue();  // It's `$null`
   }
 
   if (IsContainer(dereferenced_object)) {
     LOG_DEBUG("Is Container\n");
-    object = CachedObjectForReference(object_ref);
-    if (object == nullptr) {
-      plist_t class_reference =
-          plist_dict_get_item(dereferenced_object, "$class");
-      if (!PLIST_IS_UID(class_reference)) {
-        LOG_ERROR("Invalid class reference {TODO}. The data may be corrupt.\n");
-        return nullptr;
-      }
-
-      AnyClass* class_to_construct =
-          ValidateAndMapClassReference(class_reference, allowed_classes_);
-      if (class_to_construct == nullptr) {
-        LOG_ERROR("Invalid class reference {TODO}. The data may be corrupt.\n");
-        return nullptr;
-      }
-      LOG_DEBUG("classname: %s\n", class_to_construct->ClassName().c_str());
-
-      DecodingContext* inner_decoding_context = new DecodingContext(
-          dereferenced_object);  // dereferenced_object is a dict
-      PushDecodingContext(inner_decoding_context);
-      auto guard = make_scope_exit([&]() { PopDecodingContext(); });
-
-      object = class_to_construct->NewInstance();
-      if (!object->Decode(this)) {
-        LOG_ERROR("Can not decode object of %s class.\n",
-                  class_to_construct->ClassName().c_str());
-        delete object;
-        object = nullptr;
-      }
-
-      // TODO:
-      // CacheObject(object_ref, object);
-    } else {
-      LOG_DEBUG("cached object.class = %s.\n",
-                object->GetClass()->ClassName().c_str());
+    plist_t class_reference =
+        plist_dict_get_item(dereferenced_object, "$class");
+    if (!PLIST_IS_UID(class_reference)) {
+      LOG_ERROR("Invalid class reference {TODO}. The data may be corrupt.\n");
+      return KAValue(); // null;
     }
+
+    NSClassManager::Deserializer& deserializer = NSKeyedUnarchiver::FindClassDeserializer(class_reference);
+
+    DecodingContext* inner_decoding_context = new DecodingContext(
+        dereferenced_object);  // dereferenced_object is a dict
+    PushDecodingContext(inner_decoding_context);
+    auto guard = make_scope_exit([&]() { PopDecodingContext(); });
+
+    return deserializer(this);
   } else {
     LOG_DEBUG("Is Primitive\n");
-    object = DecodePrimitive(dereferenced_object);
-    if (object == nullptr) {
-      LOG_ERROR("Can not decode primitive type object.\n");
-    }
-    // TODO:
+    return DecodePrimitive(dereferenced_object);
   }
-  // TODO:
-
-  return object;
 }
 
-NSVariant* NSKeyedUnarchiver::DecodePrimitive(plist_t dereferenced_object) {
-  NSClass* clazz =
-      class_factory_->ClassForName("NSVariant");  // TODO: make it simple
-
+KAValue NSKeyedUnarchiver::DecodePrimitive(plist_t dereferenced_object) {
   plist_type type = plist_get_node_type(dereferenced_object);
   switch (type) {
     case PLIST_BOOLEAN: {
       uint8_t b;
       plist_get_bool_val(dereferenced_object, &b);
       LOG_DEBUG("val=%d\n", b);
-      NSVariant* obj = new NSVariant(static_cast<bool>(b));
-      obj->SetClass(clazz);
-      return obj;
+      return KAValue(static_cast<bool>(b));
     }
     case PLIST_UINT: {
       uint64_t u;
       plist_get_uint_val(dereferenced_object, &u);
       LOG_DEBUG("val=%llu\n", u);
-      NSVariant* obj = new NSVariant(u);
-      obj->SetClass(clazz);
-      return obj;
+      return KAValue(u);
     }
     case PLIST_REAL: {
       double d;
       plist_get_real_val(dereferenced_object, &d);
       LOG_DEBUG("val=%f\n", d);
-      NSVariant* obj = new NSVariant(d);
-      obj->SetClass(clazz);
-      return obj;
+      return KAValue(d);
     }
     case PLIST_STRING: {
       char* c;
       plist_get_string_val(dereferenced_object, &c);
       LOG_DEBUG("val=%s\n", c);
-      NSVariant* obj = new NSVariant(c);
-      obj->SetClass(clazz);
-      return obj;
+      KAValue value(c);
+      free(c);
+      return value;
     }
     case PLIST_ARRAY:
     case PLIST_DICT:
@@ -226,7 +193,7 @@ NSVariant* NSKeyedUnarchiver::DecodePrimitive(plist_t dereferenced_object) {
     case PLIST_NONE:
     default:
       LOG_ERROR("unsupport plist type %d.\n", type);
-      return nullptr;
+      return KAValue(); // null
   }
 }
 
@@ -249,46 +216,11 @@ plist_t NSKeyedUnarchiver::DereferenceObject(plist_t object_ref) {
   return nullptr;
 }
 
-NSObject* NSKeyedUnarchiver::CachedObjectForReference(plist_t object_ref) {
-  uint64_t uid = 0;
-  plist_get_uid_val(object_ref, &uid);
-
-  auto found = object_ref_map_.find(uid);
-  if (found != object_ref_map_.end()) {
-    return found->second;
-  }
-  return nullptr;
-}
-
-AnyClass* NSKeyedUnarchiver::ValidateAndMapClassReference(
-    plist_t class_ref, NSKeyedUnarchiver::ClassMap allowed_classes) {
-  uint64_t uid = 0;
-  plist_get_uid_val(class_ref, &uid);
-
-  auto found = classes_.find(uid);
-  if (found != classes_.end()) {
-    return found->second;
-  }
-
+NSClassManager::Deserializer& NSKeyedUnarchiver::FindClassDeserializer(plist_t class_ref) {
   plist_t class_dict = DereferenceObject(class_ref);
   if (!PLIST_IS_DICT(class_dict)) {
-    return nullptr;
+    return class_manager_->GetDefaultDeserializer();
   }
-
-  AnyClass* class_to_construct = nullptr;
-  if (!ValidateAndMapClassDictionary(class_dict, allowed_classes,
-                                     &class_to_construct)) {
-    LOG_ERROR("Invalid class {TODO}. The data may be corrupt.\n");
-    return nullptr;
-  }
-  classes_[uid] = class_to_construct;
-  return class_to_construct;
-}
-
-bool NSKeyedUnarchiver::ValidateAndMapClassDictionary(
-    plist_t class_dict, NSKeyedUnarchiver::ClassMap allowed_classes,
-    AnyClass** class_to_construct) {
-  *class_to_construct = nullptr;
 
   plist_t classname_node = plist_dict_get_item(class_dict, "$classname");
   plist_t classhints_node = plist_dict_get_item(class_dict, "$classhints");
@@ -296,10 +228,8 @@ bool NSKeyedUnarchiver::ValidateAndMapClassDictionary(
 
   std::string asserted_classname = get_string_from_plist(classname_node);
   if (!asserted_classname.empty()) {
-    AnyClass* asserted_class = ClassForClassName(asserted_classname);
-    if (IsClassAllowed(asserted_class, allowed_classes)) {
-      *class_to_construct = asserted_class;
-      return true;
+    if (class_manager_->HasDeserializer(asserted_classname)) {
+      return class_manager_->GetDeserializer(asserted_classname);
     }
   }
 
@@ -312,37 +242,17 @@ bool NSKeyedUnarchiver::ValidateAndMapClassDictionary(
       plist_array_next_item(classhints_node, it, &item_node);
       std::string asserted_classname = get_string_from_plist(item_node);
       if (!asserted_classname.empty()) {
-        AnyClass* asserted_class = ClassForClassName(asserted_classname);
-        if (IsClassAllowed(asserted_class, allowed_classes)) {
-          *class_to_construct = asserted_class;
+        if (class_manager_->HasDeserializer(asserted_classname)) {
           free(it);
-          return true;
+          return class_manager_->GetDeserializer(asserted_classname);
         }
       }
     } while (item_node);
     free(it);
   }
 
-  // TODO: Do we need to impl NSKeyedUnarchiverDelegate?
-
   LOG_ERROR("`%s` is not valid classname.\n", asserted_classname.c_str());
-  return false;
-}
-
-AnyClass* NSKeyedUnarchiver::ClassForClassName(std::string classname) {
-  return class_factory_->ClassForName(classname);
-}
-
-bool NSKeyedUnarchiver::IsClassAllowed(
-    AnyClass* asserted_class, NSKeyedUnarchiver::ClassMap allowed_classes) {
-  if (asserted_class == nullptr) {
-    return false;
-  }
-
-  // TODO: We don't support SecureCoding yet, so all classes can be allowed to
-  // be decoded.
-
-  return true;
+  return class_manager_->GetDefaultDeserializer();
 }
 
 std::string NSKeyedUnarchiver::EscapeArchiverKey(std::string key) {
@@ -409,9 +319,9 @@ bool NSKeyedUnarchiver::ContainsValue(std::string key) {
   return val != nullptr;
 }
 
-std::vector<NSObject*> NSKeyedUnarchiver::DecodeArrayOfObjectsForKey(
+std::vector<KAValue> NSKeyedUnarchiver::DecodeArrayOfObjectsForKey(
     std::string key) {
-  std::vector<NSObject*> array;
+  std::vector<KAValue> array;
   plist_t object_refs = DecodeValue(key);
 
   if (PLIST_IS_ARRAY(object_refs)) {
@@ -423,7 +333,7 @@ std::vector<NSObject*> NSKeyedUnarchiver::DecodeArrayOfObjectsForKey(
       plist_array_next_item(object_refs, it, &item_node);
 
       if (PLIST_IS_UID(item_node)) {
-        NSObject* object = DecodeObject(item_node);
+        KAValue object = DecodeObject(item_node);
         array.emplace_back(object);
       }
     } while (item_node);
