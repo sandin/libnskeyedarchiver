@@ -25,7 +25,7 @@ include_directories(${plist_INCLUDE_DIRS})
 # library: nskeyedarchiver
 include_directories("./include")
 set(HEADERS
-  include/nskeyedarchiver/common.h
+  include/nskeyedarchiver/common.hpp
   include/nskeyedarchiver/kaarray.hpp
   include/nskeyedarchiver/kamap.hpp
   include/nskeyedarchiver/kaobject.hpp
@@ -33,7 +33,7 @@ set(HEADERS
   include/nskeyedarchiver/kavalue.hpp
   include/nskeyedarchiver/nsclassmanager.hpp
   include/nskeyedarchiver/nskeyedunarchiver.hpp
-  include/nskeyedarchiver/scope.h
+  include/nskeyedarchiver/scope.hpp
 )
 set(SOURCES 
   src/nsclassmanager.cpp

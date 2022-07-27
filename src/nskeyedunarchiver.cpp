@@ -3,8 +3,8 @@
 #include <cstdlib>  // for free
 #include <cstring>  // for strcmp
 
-#include "nskeyedarchiver/common.h"
-#include "nskeyedarchiver/scope.h"
+#include "nskeyedarchiver/common.hpp"
+#include "nskeyedarchiver/scope.hpp"
 
 using namespace nskeyedarchiver;
 

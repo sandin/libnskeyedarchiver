@@ -4,7 +4,7 @@
 #include <sstream>
 #include <cstring> // strcmp
 
-#include "nskeyedarchiver/common.h"
+#include "nskeyedarchiver/common.hpp"
 #include "nskeyedarchiver/kaobject.hpp"
 
 namespace nskeyedarchiver {

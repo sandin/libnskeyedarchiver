@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "nskeyedarchiver/common.h"
+#include "nskeyedarchiver/common.hpp"
 
 namespace nskeyedarchiver {
 
