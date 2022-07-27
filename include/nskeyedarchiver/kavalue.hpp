@@ -1,14 +1,13 @@
 #ifndef NSKEYEDARCHIVER_KAVALUE_H
 #define NSKEYEDARCHIVER_KAVALUE_H
 
+#include <cstring>  // strcmp
 #include <sstream>
-#include <cstring> // strcmp
 
 #include "nskeyedarchiver/common.hpp"
 #include "nskeyedarchiver/kaobject.hpp"
 
 namespace nskeyedarchiver {
-
 
 class KAValue {
  public:
@@ -71,8 +70,7 @@ class KAValue {
     d_.s = strdup(s);
   }
   KAValue& operator=(const char* s) {
-    LOG_VERBOSE("[%p] KAValue &operator=(const char * s), s=\"%s\")\n", this,
-                s);
+    LOG_VERBOSE("[%p] KAValue &operator=(const char * s), s=\"%s\")\n", this, s);
     t_ = DataType::Str;
     d_.s = strdup(s);
     return *this;
@@ -106,25 +104,23 @@ class KAValue {
 
   // copy constructor
   KAValue(const KAValue& other) : t_(other.t_) {
-    LOG_VERBOSE("[%p] KAValue(const KAValue &other), other=[%p]\n", this,
-                &other);
+    LOG_VERBOSE("[%p] KAValue(const KAValue &other), other=[%p]\n", this, &other);
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
     } else if (t_ == DataType::Object) {
-      d_.o = new KAObject(*other.d_.o); // copy object*
+      d_.o = new KAObject(*other.d_.o);  // copy object*
     } else {
       d_ = other.d_;
     }
   }
   // copy assignment operator
   KAValue& operator=(const KAValue& other) {
-    LOG_VERBOSE("[%p] KAValue &operator=(const KAValue &other), other=[%p]\n",
-                this, &other);
+    LOG_VERBOSE("[%p] KAValue &operator=(const KAValue &other), other=[%p]\n", this, &other);
     t_ = other.t_;
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
     } else if (t_ == DataType::Object) {
-      d_.o = new KAObject(*other.d_.o); // copy object*
+      d_.o = new KAObject(*other.d_.o);  // copy object*
     } else {
       d_ = other.d_;
     }
@@ -137,7 +133,7 @@ class KAValue {
       d_.s = other.d_.s;  // move char*
       other.d_.s = nullptr;
     } else if (t_ == DataType::Object) {
-      d_.o = other.d_.o; // move object*
+      d_.o = other.d_.o;  // move object*
       other.d_.o = nullptr;
     } else {
       d_ = other.d_;
@@ -146,14 +142,13 @@ class KAValue {
   }
   // move assignment operator
   KAValue& operator=(KAValue&& other) {
-    LOG_VERBOSE("[%p] KAValue &operator=(KAValue &&other), other=[%p]\n", this,
-                &other);
+    LOG_VERBOSE("[%p] KAValue &operator=(KAValue &&other), other=[%p]\n", this, &other);
     t_ = other.t_;
     if (t_ == DataType::Str) {
       d_.s = other.d_.s;  // move char*
       other.d_.s = nullptr;
     } else if (t_ == DataType::Object) {
-      d_.o = other.d_.o; // move object*
+      d_.o = other.d_.o;  // move object*
       other.d_.o = nullptr;
     } else {
       d_ = other.d_;
@@ -161,12 +156,12 @@ class KAValue {
     other.t_ = DataType::Null;
     return *this;
   }
-  
+
   virtual bool Equals(const KAValue& other) const {
     if (t_ != other.t_) {
       return false;
     }
-    
+
     switch (t_) {
       case DataType::Bool:
         return d_.b == other.d_.b;
@@ -229,6 +224,7 @@ class KAValue {
   const char* ToStr() const { return d_.s; }
   const KAObject& ToObject() const { return *d_.o; }
 
+  DataType GetDataType() const { return t_; }
   bool IsNull() const { return t_ == DataType::Null; }
   bool IsInteger() const { return t_ == DataType::Integer; }
   bool IsBool() const { return t_ == DataType::Bool; }
@@ -239,11 +235,9 @@ class KAValue {
  private:
   Data d_;
   DataType t_;
-}; // KAValue
+};  // KAValue
 
-constexpr bool operator==(const KAValue& lhs, const KAValue& rhs) {
-    return lhs.Equals(rhs);
-}
+constexpr bool operator==(const KAValue& lhs, const KAValue& rhs) { return lhs.Equals(rhs); }
 
 }  // namespace nskeyedarchiver
 

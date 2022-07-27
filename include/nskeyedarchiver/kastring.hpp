@@ -11,8 +11,8 @@ namespace nskeyedarchiver {
 
 class KAString : public KAObject {
  public:
-  KAString(const std::string& class_name,
-           const std::vector<std::string>& classes, const std::string& str)
+  KAString(const std::string& class_name, const std::vector<std::string>& classes,
+           const std::string& str)
       : KAObject(class_name, classes), str_(str) {
     LOG_VERBOSE(
         "[%p] KAString(std::string class_name, const char* str), "
@@ -21,14 +21,12 @@ class KAString : public KAObject {
   }
 
   // copy constructor
-  KAString(const KAString& other)
-      : KAString(other.class_name_, other.classes_, other.str_) {
+  KAString(const KAString& other) : KAString(other.class_name_, other.classes_, other.str_) {
     LOG_VERBOSE("[%p] KAString(const KAString &other[%p])\n", this, &other);
   }
   // copy assignment operator
   KAString& operator=(const KAString& other) {
-    LOG_VERBOSE("[%p] KAString &operator=(const KAString &other[%p)\n", this,
-                &other);
+    LOG_VERBOSE("[%p] KAString &operator=(const KAString &other[%p)\n", this, &other);
     class_name_ = other.class_name_;
     classes_ = other.classes_;
     str_ = other.str_;
@@ -44,15 +42,14 @@ class KAString : public KAObject {
 
   // move assignment operator
   KAString& operator=(KAString&& other) {
-    LOG_VERBOSE("[%p] KAString &operator=(KAString &&other[%p])\n", this,
-                &other);
+    LOG_VERBOSE("[%p] KAString &operator=(KAString &&other[%p])\n", this, &other);
     class_name_ = std::move(other.class_name_);
     classes_ = std::move(other.classes_);
     str_ = std::move(other.str_);
     // other.str_.clear();
     return *this;
   }
-  
+
   virtual bool Equals(const KAString& other) const {
     return class_name_ == other.class_name_ && classes_ == other.classes_ && str_ == other.str_;
   }

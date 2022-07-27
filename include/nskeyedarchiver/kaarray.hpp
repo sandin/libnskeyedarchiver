@@ -15,8 +15,8 @@ class KAArray : public KAObject {
   using ObjectList = std::vector<KAValue>;
 
   // copy constructor for vector
-  KAArray(const std::string& class_name,
-          const std::vector<std::string>& classes, const ObjectList& arr)
+  KAArray(const std::string& class_name, const std::vector<std::string>& classes,
+          const ObjectList& arr)
       : KAObject(class_name, classes), arr_(arr) {
     LOG_VERBOSE(
         "[%p] KAArray(const std::string& class_name, const ObjectList& arr), "
@@ -24,8 +24,7 @@ class KAArray : public KAObject {
         this, class_name_.c_str());
   }
   // copy constructor for initializer_list
-  KAArray(const std::string& class_name,
-          const std::vector<std::string>& classes,
+  KAArray(const std::string& class_name, const std::vector<std::string>& classes,
           std::initializer_list<KAValue> list)
       : KAObject(class_name, classes), arr_(list) {
     LOG_VERBOSE(
@@ -34,8 +33,7 @@ class KAArray : public KAObject {
         this, class_name_.c_str());
   }
   // move constructor for vector
-  KAArray(const std::string& class_name,
-          const std::vector<std::string>& classes, ObjectList&& arr)
+  KAArray(const std::string& class_name, const std::vector<std::string>& classes, ObjectList&& arr)
       : KAObject(class_name, classes), arr_(std::forward<ObjectList>(arr)) {
     LOG_VERBOSE(
         "[%p] KAArray(std::string class_name, ObjectList&& arr), "
@@ -44,14 +42,12 @@ class KAArray : public KAObject {
   }
 
   // copy constructor
-  KAArray(const KAArray& other)
-      : KAArray(other.class_name_, other.classes_, other.arr_) {
+  KAArray(const KAArray& other) : KAArray(other.class_name_, other.classes_, other.arr_) {
     LOG_VERBOSE("[%p] KAArray(const KAObject &other[%p])\n", this, &other);
   }
   // copy assignment operator
   KAArray& operator=(const KAArray& other) {
-    LOG_VERBOSE("[%p] KAArray &operator=(const KAArray &other[%p)\n", this,
-                &other);
+    LOG_VERBOSE("[%p] KAArray &operator=(const KAArray &other[%p)\n", this, &other);
     class_name_ = other.class_name_;
     classes_ = other.classes_;
     arr_ = other.arr_;
@@ -59,8 +55,7 @@ class KAArray : public KAObject {
   }
 
   // move constructor
-  KAArray(KAArray&& other)
-      : KAObject(std::forward<KAObject>(other)), arr_(std::move(other.arr_)) {
+  KAArray(KAArray&& other) : KAObject(std::forward<KAObject>(other)), arr_(std::move(other.arr_)) {
     LOG_VERBOSE("[%p] KAArray(KAArray &&other[%p])\n", this, &other);
     // other.arr_.clear()
   }
@@ -73,7 +68,7 @@ class KAArray : public KAObject {
     // other.arr_.clear();
     return *this;
   }
-  
+
   virtual bool Equals(const KAArray& other) const {
     return class_name_ == other.class_name_ && classes_ == other.classes_ && arr_ == other.arr_;
   }
@@ -95,7 +90,6 @@ class KAArray : public KAObject {
  private:
   ObjectList arr_;
 };  // KAArray
-
 
 }  // namespace nskeyedarchiver
 

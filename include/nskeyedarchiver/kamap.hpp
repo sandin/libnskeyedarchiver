@@ -15,6 +15,13 @@ class KAMap : public KAObject {
   using KeyType = std::string;
   using ObjectMap = std::map<KeyType, KAValue>;
 
+  KAMap(const std::string& class_name, const std::vector<std::string>& classes)
+      : KAObject(class_name, classes) {
+    LOG_VERBOSE(
+        "[%p] KAMap(const std::string& class_name), "
+        "class_name=%s\n",
+        this, class_name_.c_str());
+  }
   // copy constructor for map
   KAMap(const std::string& class_name, const std::vector<std::string>& classes,
         const ObjectMap& map)
@@ -25,8 +32,7 @@ class KAMap : public KAObject {
         this, class_name_.c_str());
   }
   // move constructor for map
-  KAMap(const std::string& class_name, const std::vector<std::string>& classes,
-        ObjectMap&& map)
+  KAMap(const std::string& class_name, const std::vector<std::string>& classes, ObjectMap&& map)
       : KAObject(class_name, classes), map_(std::forward<ObjectMap>(map)) {
     LOG_VERBOSE(
         "[%p] KAMap(const std::string& class_name, ObjectMap &&map), "
@@ -35,8 +41,7 @@ class KAMap : public KAObject {
   }
 
   // copy constructor
-  KAMap(const KAMap& other)
-      : KAMap(other.class_name_, other.classes_, other.map_) {
+  KAMap(const KAMap& other) : KAMap(other.class_name_, other.classes_, other.map_) {
     LOG_VERBOSE("[%p] KAMap(const KAMap &other[%p])\n", this, &other);
   }
   // copy assignment operator
@@ -49,8 +54,7 @@ class KAMap : public KAObject {
   }
 
   // move constructor
-  KAMap(KAMap&& other)
-      : KAObject(std::forward<KAObject>(other)), map_(std::move(other.map_)) {
+  KAMap(KAMap&& other) : KAObject(std::forward<KAObject>(other)), map_(std::move(other.map_)) {
     LOG_VERBOSE("[%p] KAMap(KAMap &&other[%p])\n", this, &other);
     // other.map_.clear();
   }
@@ -66,13 +70,12 @@ class KAMap : public KAObject {
 
   // map[key] copy
   KAValue& operator[](const KeyType& key) {
-    LOG_VERBOSE("[%p] KAValue &operator[](const std::string &key), key=%s\n",
-                this, key.c_str());
+    LOG_VERBOSE("[%p] KAValue &operator[](const std::string &key), key=%s\n", this, key.c_str());
     return map_[key];
   }
   // map[key] move
   // KAValue &operator[](KeyType &&key) = delete;
-  
+
   virtual bool Equals(const KAMap& other) const {
     return class_name_ == other.class_name_ && classes_ == other.classes_ && map_ == other.map_;
   }

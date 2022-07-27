@@ -31,11 +31,14 @@ set(HEADERS
   include/nskeyedarchiver/kaobject.hpp
   include/nskeyedarchiver/kastring.hpp
   include/nskeyedarchiver/kavalue.hpp
+  include/nskeyedarchiver/nstypes.hpp
+  include/nskeyedarchiver/nsclass.hpp
   include/nskeyedarchiver/nsclassmanager.hpp
   include/nskeyedarchiver/nskeyedunarchiver.hpp
   include/nskeyedarchiver/scope.hpp
 )
 set(SOURCES 
+  src/nstypes.cpp
   src/nsclassmanager.cpp
   src/nskeyedunarchiver.cpp
 )

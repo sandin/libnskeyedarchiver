@@ -1,8 +1,9 @@
 #include "nskeyedarchiver/kavalue.hpp"
-#include "nskeyedarchiver/kaobject.hpp"
 
 #include <gtest/gtest.h>
 #include <sys/stat.h>
+
+#include "nskeyedarchiver/kaobject.hpp"
 
 using namespace nskeyedarchiver;
 
@@ -12,7 +13,7 @@ TEST(KAValueTest, Ctor_Integer_uint64_t) {
   KAValue value(v);
   ASSERT_TRUE(value.IsInteger());
   ASSERT_EQ(v, value.ToInteger());
-  
+
   // assignment
   KAValue value2;
   value2 = v;
@@ -26,7 +27,7 @@ TEST(KAValueTest, Ctor_Integer_uint32_t) {
   KAValue value(v);
   ASSERT_TRUE(value.IsInteger());
   ASSERT_EQ(v, value.ToInteger());
-  
+
   // assignment
   KAValue value2;
   value2 = v;
@@ -40,7 +41,7 @@ TEST(KAValueTest, Ctor_Integer_int64_t) {
   KAValue value(v);
   ASSERT_TRUE(value.IsInteger());
   ASSERT_EQ(v, value.ToInteger());
-  
+
   // assignment
   KAValue value2;
   value2 = v;
@@ -54,7 +55,7 @@ TEST(KAValueTest, Ctor_Integer_int32_t) {
   KAValue value(v);
   ASSERT_TRUE(value.IsInteger());
   ASSERT_EQ(v, value.ToInteger());
-  
+
   // assignment
   KAValue value2;
   value2 = v;
@@ -68,7 +69,7 @@ TEST(KAValueTest, Ctor_Bool) {
   KAValue value(b);
   ASSERT_TRUE(value.IsBool());
   ASSERT_EQ(b, value.ToBool());
-  
+
   // assignment
   KAValue value2;
   value2 = b;
@@ -82,7 +83,7 @@ TEST(KAValueTest, Ctor_Double) {
   KAValue value(d);
   ASSERT_TRUE(value.IsDouble());
   ASSERT_EQ(d, value.ToDouble());
-  
+
   // assignment
   KAValue value2;
   value2 = d;
@@ -101,24 +102,24 @@ TEST(KAValueTest, Ctor_Str) {
   KAValue value(s);
   ASSERT_TRUE(value.IsStr());
   ASSERT_STREQ(s, value.ToStr());
-  
+
   // assignment
   KAValue value2;
   value2 = s;
   ASSERT_TRUE(value2.IsStr());
   ASSERT_STREQ(s, value2.ToStr());
-  
+
   // copy ctor
   KAValue cloned1(value);
   ASSERT_TRUE(cloned1.IsStr());
   ASSERT_STREQ(s, cloned1.ToStr());
-  ASSERT_TRUE(value.IsStr()); // untouched
+  ASSERT_TRUE(value.IsStr());  // untouched
 
   // move ctor
   KAValue value3(std::move(value2));
   ASSERT_TRUE(value3.IsStr());
   ASSERT_STREQ(s, value3.ToStr());
-  ASSERT_TRUE(value2.IsNull()); // reset the moved value
+  ASSERT_TRUE(value2.IsNull());  // reset the moved value
 }
 
 TEST(KAValueTest, Ctor_Object) {
@@ -127,7 +128,7 @@ TEST(KAValueTest, Ctor_Object) {
   KAValue value(obj);
   ASSERT_TRUE(value.IsObject());
   ASSERT_STREQ(obj.ClassName().c_str(), value.ToObject().ClassName().c_str());
-  
+
   // copy assignment
   KAValue value1;
   value1 = obj;
@@ -135,115 +136,116 @@ TEST(KAValueTest, Ctor_Object) {
   ASSERT_STREQ(obj.ClassName().c_str(), value1.ToObject().ClassName().c_str());
 }
 
-
 TEST(KAValueTest, CopyAndMoveCtor_uint64_t) {
   // ctor
   uint64_t v = 3;
   KAValue value(v);
-  
+
   // copy ctor
   KAValue cloned1(value);
   ASSERT_TRUE(cloned1.IsInteger());
   ASSERT_EQ(v, cloned1.ToInteger());
-  ASSERT_TRUE(value.IsInteger()); // untouched
-  
+  ASSERT_TRUE(value.IsInteger());  // untouched
+
   // copy assignment operator
   KAValue cloned2 = value;
   ASSERT_TRUE(cloned2.IsInteger());
   ASSERT_EQ(v, cloned2.ToInteger());
-  ASSERT_TRUE(value.IsInteger()); // untouched
-  
+  ASSERT_TRUE(value.IsInteger());  // untouched
+
   // move ctor
   KAValue value2(std::move(value));
   ASSERT_TRUE(value2.IsInteger());
   ASSERT_EQ(v, value2.ToInteger());
-  ASSERT_TRUE(value.IsNull()); // reset the moved value
-  
+  ASSERT_TRUE(value.IsNull());  // reset the moved value
+
   // move assignment operator
   KAValue value3 = std::move(value2);
   ASSERT_TRUE(value3.IsInteger());
   ASSERT_EQ(v, value3.ToInteger());
-  ASSERT_TRUE(value2.IsNull()); // reset the moved value
+  ASSERT_TRUE(value2.IsNull());  // reset the moved value
 }
 
 TEST(KAValueTest, CopyAndMoveCtor_Str) {
   // ctor
   const char* v = "3";
   KAValue value(v);
-  
+
   // copy ctor
   KAValue cloned1(value);
   ASSERT_TRUE(cloned1.IsStr());
   ASSERT_STREQ(v, cloned1.ToStr());
-  ASSERT_TRUE(value.IsStr()); // untouched
-  
+  ASSERT_TRUE(value.IsStr());  // untouched
+
   // copy assignment operator
   KAValue cloned2 = value;
   ASSERT_TRUE(cloned2.IsStr());
   ASSERT_STREQ(v, cloned2.ToStr());
-  ASSERT_TRUE(value.IsStr()); // untouched
-  
+  ASSERT_TRUE(value.IsStr());  // untouched
+
   // move ctor
   KAValue value2(std::move(value));
   ASSERT_TRUE(value2.IsStr());
   ASSERT_STREQ(v, value2.ToStr());
-  ASSERT_TRUE(value.IsNull()); // reset the moved value
-  
+  ASSERT_TRUE(value.IsNull());  // reset the moved value
+
   // move assignment operator
   KAValue value3 = std::move(value2);
   ASSERT_TRUE(value3.IsStr());
   ASSERT_STREQ(v, value3.ToStr());
-  ASSERT_TRUE(value2.IsNull()); // reset the moved value
+  ASSERT_TRUE(value2.IsNull());  // reset the moved value
 }
 
 TEST(KAValueTest, CopyAndMoveCtor_Object) {
   // ctor
   KAObject obj("NSObject", {"NSObject"});
   KAValue value(obj);
-  
+
   // copy ctor
   KAValue cloned1(value);
   ASSERT_TRUE(cloned1.IsObject());
   ASSERT_STREQ(obj.ClassName().c_str(), cloned1.ToObject().ClassName().c_str());
-  ASSERT_TRUE(value.IsObject()); // untouched
-  
+  ASSERT_TRUE(value.IsObject());  // untouched
+
   // copy assignment operator
   KAValue cloned2 = value;
   ASSERT_TRUE(cloned2.IsObject());
   ASSERT_STREQ(obj.ClassName().c_str(), cloned2.ToObject().ClassName().c_str());
-  ASSERT_TRUE(value.IsObject()); // untouched
-  
+  ASSERT_TRUE(value.IsObject());  // untouched
+
   // move ctor
   KAValue value2(std::move(value));
   ASSERT_TRUE(value2.IsObject());
   ASSERT_STREQ(obj.ClassName().c_str(), value2.ToObject().ClassName().c_str());
-  ASSERT_TRUE(value.IsNull()); // reset the moved value
-  
+  ASSERT_TRUE(value.IsNull());  // reset the moved value
+
   // move assignment operator
   KAValue value3 = std::move(value2);
   ASSERT_TRUE(value3.IsObject());
   ASSERT_STREQ(obj.ClassName().c_str(), value3.ToObject().ClassName().c_str());
-  ASSERT_TRUE(value2.IsNull()); // reset the moved value
+  ASSERT_TRUE(value2.IsNull());  // reset the moved value
 }
 
 TEST(KAValueTest, Equals) {
   ASSERT_TRUE(KAValue(1) == KAValue(1));
   ASSERT_FALSE(KAValue(1) == KAValue(2));
   ASSERT_FALSE(KAValue(1) == KAValue());
-  
+
   ASSERT_TRUE(KAValue(true) == KAValue(true));
   ASSERT_FALSE(KAValue(true) == KAValue(false));
   ASSERT_FALSE(KAValue(true) == KAValue());
-  
+
   ASSERT_TRUE(KAValue(1.1) == KAValue(1.1));
   ASSERT_FALSE(KAValue(1.1) == KAValue(1.2));
   ASSERT_FALSE(KAValue(1.1) == KAValue());
-  
+
   ASSERT_TRUE(KAValue("abc") == KAValue("abc"));
   ASSERT_FALSE(KAValue("abc") == KAValue("xyz"));
   ASSERT_FALSE(KAValue("abc") == KAValue());
-  
-  ASSERT_TRUE(KAValue(KAObject("NSString", {"NSString", "NSObject"})) == KAValue(KAObject("NSString", {"NSString", "NSObject"})));
-  ASSERT_FALSE(KAValue(KAObject("NSString", {"NSString", "NSObject"})) == KAValue(KAObject("NSArray", {"NSArray", "NSObject"})));
+
+  ASSERT_TRUE(KAValue(KAObject("NSString", {"NSString", "NSObject"})) ==
+              KAValue(KAObject("NSString", {"NSString", "NSObject"})));
+  ASSERT_FALSE(KAValue(KAObject("NSString", {"NSString", "NSObject"})) ==
+               KAValue(KAObject("NSArray", {"NSArray", "NSObject"})));
   ASSERT_FALSE(KAValue(KAObject("NSString", {"NSString", "NSObject"})) == KAValue());
 }
