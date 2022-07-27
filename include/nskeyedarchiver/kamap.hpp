@@ -76,12 +76,14 @@ class KAMap : public KAObject {
   // map[key] move
   // KAValue &operator[](KeyType &&key) = delete;
 
+  virtual KAMap* Clone() const { return new KAMap(*this); }
+
   virtual bool Equals(const KAMap& other) const {
     return class_name_ == other.class_name_ && classes_ == other.classes_ && map_ == other.map_;
   }
   inline bool operator==(const KAMap& rhs) { return Equals(rhs); }
 
-  const ObjectMap& ToMap() const { return map_; }
+  ObjectMap& ToMap() { return map_; }
   size_t Size() const { return map_.size(); }
   bool Empty() const { return map_.empty(); }
 

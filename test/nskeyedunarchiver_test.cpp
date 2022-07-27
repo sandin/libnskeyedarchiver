@@ -3,6 +3,11 @@
 #include <gtest/gtest.h>
 #include <sys/stat.h>
 
+#include <string>
+#include <typeinfo>
+
+#include "nskeyedarchiver/kaarray.hpp"
+#include "nskeyedarchiver/kamap.hpp"
 #include "nskeyedarchiver/scope.hpp"
 
 using namespace nskeyedarchiver;
@@ -46,8 +51,35 @@ TEST(NSKeyedUnarchiverTest, DecodeObject) {
   KAValue obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(buffer, (uint32_t)buffer_size);
   ASSERT_FALSE(obj.IsNull());
   ASSERT_TRUE(obj.IsObject());
-  const KAObject& root = obj.ToObject();
+
+  KAMap* root = static_cast<KAMap*>(obj.ToObject());
+  printf("root typeid: %s.\n", typeid(root).name());
+  ASSERT_STREQ(root->ClassName().c_str(), "NSDictionary");
+  ASSERT_EQ(3, root->Size());
+
+  /*
+  const KAMap& root = obj.ToObject<KAMap>();
+  printf("root ptr: %p.\n", &root);
+  printf("root typeid: %s.\n", typeid(root).name());
   printf("UnarchiveTopLevelObjectWithData, root.className=%s\n", root.ClassName().c_str());
+  ASSERT_STREQ(root.ClassName().c_str(), "NSDictionary");
+  ASSERT_EQ(3, root.Size());
+  */
+
+  KAValue& ur = (*root)["ur"];
+  ASSERT_TRUE(ur.IsInteger());
+  ASSERT_EQ(500, ur.ToInteger());
+
+  KAValue& rp = (*root)["rp"];
+  ASSERT_TRUE(rp.IsInteger());
+  ASSERT_EQ(10, rp.ToInteger());
+
+  KAValue& tc = (*root)["tc"];
+  ASSERT_TRUE(tc.IsObject());
+  KAArray* tc_arr = static_cast<KAArray*>(tc.ToObject());
+  ASSERT_EQ(1, tc_arr->Size());
+
+  // TODO:
 }
 
 TEST(NSKeyedUnarchiverTest, DecodeString) {

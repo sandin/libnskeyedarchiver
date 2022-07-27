@@ -1,5 +1,6 @@
 #include "nskeyedarchiver/nstypes.hpp"
 
+#include "nskeyedarchiver/kaarray.hpp"
 #include "nskeyedarchiver/kamap.hpp"
 
 using namespace nskeyedarchiver;
@@ -49,4 +50,19 @@ KAValue NSDictionary::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& cla
   }
 
   return KAValue(map);
+}
+
+/* -- NSArray -- */
+
+// static
+KAValue NSArray::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
+  LOG_INFO("NSArray deserialize\n");
+  if (!decoder->ContainsValue("NS.objects")) {
+    LOG_ERROR("missing NS.objects.\n");
+    return KAValue();  // null
+  }
+
+  std::vector<KAValue> values = decoder->DecodeArrayOfObjectsForKey("NS.objects");
+  KAArray arr(clazz.class_name, clazz.classes, std::move(values));
+  return KAValue(arr);
 }

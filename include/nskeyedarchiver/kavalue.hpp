@@ -76,19 +76,21 @@ class KAValue {
     return *this;
   }
 
+  explicit KAValue(KAObject* object) : t_(DataType::Object) { d_.o = object; }
   // copy object
   explicit KAValue(const KAObject& object) : t_(DataType::Object) {
     LOG_VERBOSE("[%p] KAValue(const KAObject &object)\n", this);
-    d_.o = new KAObject(object);
+    d_.o = object.Clone();
   }
   // copy assignment operator(for KAObject)
   KAValue& operator=(const KAObject& object) {
     LOG_VERBOSE("[%p] KAValue &operator=(const KAObject &object)\n", this);
     t_ = DataType::Object;
-    d_.o = new KAObject(object);
+    d_.o = object.Clone();
     return *this;
   }
-  // move object
+  /*
+  // TODO: move object
   KAValue(KAObject&& object) : t_(DataType::Object) {
     LOG_VERBOSE("[%p] KAValue(KAObject &&object)\n", this);
     d_.o = new KAObject(std::forward<KAObject>(object));
@@ -101,6 +103,7 @@ class KAValue {
     // TODO: reset object
     return *this;
   }
+  */
 
   // copy constructor
   KAValue(const KAValue& other) : t_(other.t_) {
@@ -108,7 +111,7 @@ class KAValue {
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
     } else if (t_ == DataType::Object) {
-      d_.o = new KAObject(*other.d_.o);  // copy object*
+      d_.o = other.d_.o->Clone();
     } else {
       d_ = other.d_;
     }
@@ -120,7 +123,7 @@ class KAValue {
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
     } else if (t_ == DataType::Object) {
-      d_.o = new KAObject(*other.d_.o);  // copy object*
+      d_.o = other.d_.o->Clone();
     } else {
       d_ = other.d_;
     }
@@ -222,7 +225,12 @@ class KAValue {
   bool ToBool() const { return d_.b; }
   double ToDouble() const { return d_.d; }
   const char* ToStr() const { return d_.s; }
-  const KAObject& ToObject() const { return *d_.o; }
+  KAObject* ToObject() { return d_.o; }
+  template <class T>
+  const T& ToObject() const {
+    T* ptr = static_cast<T*>(d_.o);
+    return *ptr;
+  }
 
   DataType GetDataType() const { return t_; }
   bool IsNull() const { return t_ == DataType::Null; }

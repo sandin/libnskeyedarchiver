@@ -20,6 +20,11 @@ class NSDictionary {
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 
+class NSArray {
+ public:
+  static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
+};
+
 }  // namespace nskeyedarchiver
 
 #endif  // NSKEYEDARCHIVER_NS_TYPES_H

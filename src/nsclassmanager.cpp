@@ -6,6 +6,9 @@ using namespace nskeyedarchiver;
 
 NSClassManager::NSClassManager() : default_deserializer_(NSDummy::Deserialize) {
   RegisterDeserializer("NSDictionary", NSDictionary::Deserialize);
+  RegisterDeserializer("NSMutableDictionary", NSDictionary::Deserialize);
+  RegisterDeserializer("NSArray", NSArray::Deserialize);
+  RegisterDeserializer("NSMutableArray", NSArray::Deserialize);
 }
 
 NSClassManager::~NSClassManager() {}

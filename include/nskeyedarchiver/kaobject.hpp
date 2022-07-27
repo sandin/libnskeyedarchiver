@@ -45,6 +45,8 @@ class KAObject {
     return *this;
   }
 
+  virtual KAObject* Clone() const { return new KAObject(*this); }
+
   virtual bool Equals(const KAObject& other) {
     return class_name_ == other.class_name_ && classes_ == other.classes_;
   }
