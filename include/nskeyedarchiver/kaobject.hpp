@@ -53,6 +53,8 @@ class KAObject {
   }
   inline bool operator==(const KAObject& rhs) { return Equals(rhs); }
 
+  virtual std::string ToJson() const { return "null"; }
+
   virtual ~KAObject() { LOG_VERBOSE("[%p] ~KAObject, class_name=%s\n", this, class_name_.c_str()); }
 
   const std::string& ClassName() const { return class_name_; }

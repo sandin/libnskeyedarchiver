@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include "nskeyedarchiver/kaobject.hpp"
 
@@ -57,6 +58,12 @@ class KAString : public KAObject {
     return class_name_ == other.class_name_ && classes_ == other.classes_ && str_ == other.str_;
   }
   inline bool operator==(const KAString& rhs) { return Equals(rhs); }
+
+  virtual std::string ToJson() const {
+    std::stringstream ss;
+    ss << "\"" << str_ + "\"";
+    return ss.str();
+  }
 
   const std::string& ToString() const { return str_; }
   size_t Size() const { return str_.size(); }

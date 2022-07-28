@@ -2,8 +2,8 @@
 #define NSKEYEDARCHIVER_KAVALUE_H
 
 #include <cstring>  // strcmp
+#include <memory>   // allocator, allocator_traits, unique_ptr
 #include <sstream>
-#include <memory> // allocator, allocator_traits, unique_ptr
 
 #include "nskeyedarchiver/common.hpp"
 #include "nskeyedarchiver/kaobject.hpp"
@@ -94,13 +94,13 @@ class KAValue {
   // move object
   KAValue(KAObject&& object) : t_(DataType::Object) {
     LOG_VERBOSE("[%p] KAValue(KAObject &&object)\n", this);
-    d_.o = object.CloneByMove(std::move(object)); // new KAMap(std::move(object))
+    d_.o = object.CloneByMove(std::move(object));  // new KAMap(std::move(object))
   }
   // move assignment operator（for KAObject)
   KAValue& operator=(KAObject&& object) {
     LOG_VERBOSE("[%p] KAValue &operator=(KAObject &&object)\n", this);
     t_ = DataType::Object;
-    d_.o = object.CloneByMove(std::move(object)); // new KAMap(std::move(object))
+    d_.o = object.CloneByMove(std::move(object));  // new KAMap(std::move(object))
     return *this;
   }
 
@@ -195,29 +195,21 @@ class KAValue {
     }
   }
 
-  std::string Dump() {
-    std::stringstream ss;
+  std::string ToJson() const {
     switch (t_) {
       case DataType::Bool:
-        ss << "t=Bool, d=" << d_.b;
-        break;
+        return d_.b ? "true" : "false";
       case DataType::Integer:
-        ss << "t=Integer, d=" << d_.u;
-        break;
+        return std::to_string(d_.u);
       case DataType::Double:
-        ss << "t=Double, d=" << d_.d;
-        break;
+        return std::to_string(d_.d);
       case DataType::Str:
-        ss << "t=Str, d=\"" << d_.s << "\"";
-        break;
+        return std::string("\"") + d_.s + "\"";
       case DataType::Object:
-        ss << "t=Object, d=" << d_.o->ClassName();
-        break;
+        return d_.o->ToJson();
       default:
-        ss << "t=" << t_;
-        break;
+        ASSERT(false);
     }
-    return ss.str();
   }
 
   uint64_t ToInteger() const { return d_.u; }

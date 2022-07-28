@@ -2,6 +2,7 @@
 #define NSKEYEDARCHIVER_KAARRAY_H
 
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -84,16 +85,29 @@ class KAArray : public KAObject {
   }
   inline bool operator==(const KAArray& rhs) { return Equals(rhs); }
 
+  virtual std::string ToJson() const {
+    std::stringstream ss;
+    ss << "[";
+
+    int i = 0;
+    size_t size = arr_.size();
+    for (const KAValue& item : arr_) {
+      ss << item.ToJson();
+      if (i < size - 1) {
+        ss << ",";
+      }
+      i++;
+    }
+    ss << "]";
+    return ss.str();
+  }
+
   // arr[i] = value
   const KAValue& operator[](size_t idx) const { return arr_[idx]; }
-  
+
   // at(key)
-  KAValue& at(size_t key) {
-    return arr_.at(key);
-  }
-  const KAValue& at(size_t key) const {
-    return arr_.at(key);
-  }
+  KAValue& at(size_t key) { return arr_.at(key); }
+  const KAValue& at(size_t key) const { return arr_.at(key); }
 
   void push_back(const KAValue& value) { arr_.push_back(value); }
   void push_back(KAValue&& value) {

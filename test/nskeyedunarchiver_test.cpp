@@ -47,20 +47,6 @@ using namespace nskeyedarchiver;
   } while (0)
 
 TEST(NSKeyedUnarchiverTest, DecodeObject_NSDictionary_SetConfig) {
-  // TEST DATA:
-  // ```
-  // {
-  //    "rp": 10,
-  //    "ur": 500,
-  //    "tc": [
-  //        {
-  //            "uuid": "2C46B61A-CDA9-4D59-B901-22E28B08C260",
-  //            "tk": 3,
-  //            "kdf2": [630784000, 833617920, 830472456]
-  //        }
-  //    ]
-  // }
-  // ```
   char* buffer = nullptr;
   size_t buffer_size = 0;
   READ_CONTENT_FROM_FILE("nsdictionary_setconfig.bplist");
@@ -123,16 +109,60 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSDictionary_SetConfig) {
   const KAValue& kdf2_set_item_2 = kdf2_set.at(2);
   ASSERT_TRUE(kdf2_set_item_2.IsInteger());
   ASSERT_EQ(830472456, kdf2_set_item_2.ToInteger());
+
+  std::string json = root.ToJson();
+  printf("%s\n", json.c_str());
+  ASSERT_STREQ(
+      R"({rp:10,tc:[{kdf2:[630784000,833617920,830472456],tk:3,uuid:"2C46B61A-CDA9-4D59-B901-22E28B08C260"}],ur:500})",
+      json.c_str());
+}
+
+TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_GpuInfo) {
+  char* buffer = nullptr;
+  size_t buffer_size = 0;
+  READ_CONTENT_FROM_FILE("nsarray_gpuinfo.bplist");
+  auto guard = make_scope_exit([&]() { free(buffer); });
+
+  KAValue obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(buffer, (uint32_t)buffer_size);
+  ASSERT_FALSE(obj.IsNull());
+  ASSERT_TRUE(obj.IsObject());
+
+  const KAArray& root = obj.ToObject<KAArray>();
+  ASSERT_STREQ(root.ClassName().c_str(), "NSMutableArray");
+  ASSERT_EQ(1, root.Size());
+
+  const KAMap& item_0 = root.at(0).ToObject<KAMap>();
+  ASSERT_STREQ(item_0.ClassName().c_str(), "NSDictionary");
+  ASSERT_EQ(15, item_0.Size());
+
+  ASSERT_EQ(KAValue(4294967998LL), item_0.at("accelerator-id"));
+  ASSERT_EQ(KAValue("3.24.4"), item_0.at("agx-tracecode-version"));
+  ASSERT_EQ(KAValue("A13"), item_0.at("device-name"));
+  ASSERT_EQ("NSMutableArray", item_0.at("displays").ToObject<KAArray>().ClassName());
+  ASSERT_EQ(KAValue("A13"), item_0.at("family-name"));
+  ASSERT_EQ(KAValue(false), item_0.at("headless"));
+  ASSERT_EQ(KAValue(false), item_0.at("low-power"));
+  ASSERT_EQ(KAValue(0), item_0.at("min-collection-interval"));
+  ASSERT_EQ(KAValue(true), item_0.at("mobile"));
+  ASSERT_EQ("NSMutableDictionary", item_0.at("perf-state").ToObject<KAMap>().ClassName());
+  ASSERT_EQ(KAValue(""), item_0.at("product-name"));
+  ASSERT_EQ(
+      KAValue(2620473344LL),
+      item_0.at(
+          "recommended-max-working-set-size"));  // https://developer.apple.com/documentation/metal/mtldevice/2369280-recommendedmaxworkingsetsize
+  ASSERT_EQ(KAValue(false), item_0.at("removable"));
+  ASSERT_EQ("NSMutableArray",
+            item_0.at("supported-counter-profiles").ToObject<KAArray>().ClassName());
+  ASSERT_EQ(KAValue("Apple"), item_0.at("vendor-name"));
+
+  std::string json = root.ToJson();
+  printf("%s\n", json.c_str());
+  ASSERT_STREQ(
+      R"([{"accelerator-id":4294967998,"agx-tracecode-version":"3.24.4","device-name":"A13","displays":[{"accelerator-id":4294967998,"built-in":true,"device-name":"LCD","display-id":1,"framebuffer-index":0,"pixel-height":2688.000000,"pixel-width":1242.000000,"resolution":[1242.000000,2688.000000]}],"family-name":"A13","headless":false,"low-power":false,"min-collection-interval":0,"mobile":true,"perf-state":{"accelerator-id":4294967998,"available":true,"enabled":false,"level":0,"mapping":16975360,"sustained":false},"product-name":"","recommended-max-working-set-size":2620473344,"removable":false,"supported-counter-profiles":[0,3,4,1],"vendor-name":"Apple"}])",
+      json.c_str());
 }
 
 TEST(NSKeyedUnarchiverTest, DecodeObject_NSSet_Energy) {
-  // TEST DATA:
-  // ```
-  // [
-  //    "energy.cost", "energy.CPU", "energy.networking", "energy.location",
-  //    "energy.GPU", "energy.appstate", "energy.overhead"
-  // ]
-  // ```
   char* buffer = nullptr;
   size_t buffer_size = 0;
   READ_CONTENT_FROM_FILE("nsset_energy.bplist");
@@ -153,13 +183,15 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSSet_Energy) {
   ASSERT_EQ(KAValue("energy.GPU"), root.at(4));
   ASSERT_EQ(KAValue("energy.appstate"), root.at(5));
   ASSERT_EQ(KAValue("energy.overhead"), root.at(6));
+
+  std::string json = root.ToJson();
+  printf("%s\n", json.c_str());
+  ASSERT_STREQ(
+      R"(["energy.cost","energy.CPU","energy.networking","energy.location","energy.GPU","energy.appstate","energy.overhead"])",
+      json.c_str());
 }
 
 TEST(NSKeyedUnarchiverTest, DecodeString) {
-  // TEST DATA:
-  // ```
-  // "setConfig:"
-  // ```
   char* buffer = nullptr;
   size_t buffer_size = 0;
   READ_CONTENT_FROM_FILE("nsstring_setconfig.bplist");
@@ -171,13 +203,13 @@ TEST(NSKeyedUnarchiverTest, DecodeString) {
   const char* val = obj.ToStr();
   printf("val=%s\n", val);
   EXPECT_STREQ(val, "setConfig:");
+
+  std::string json = obj.ToJson();
+  printf("%s\n", json.c_str());
+  ASSERT_STREQ(R"("setConfig:")", json.c_str());
 }
 
 TEST(NSKeyedUnarchiverTest, DecodeUInt) {
-  // TEST DATA:
-  // ```
-  // 10
-  // ```
   char* buffer = nullptr;
   size_t buffer_size = 0;
   READ_CONTENT_FROM_FILE("integer_10.bplist");
@@ -189,13 +221,13 @@ TEST(NSKeyedUnarchiverTest, DecodeUInt) {
   uint64_t val = obj.ToInteger();
   printf("val=%llu\n", val);
   EXPECT_EQ(val, 10);
+
+  std::string json = obj.ToJson();
+  printf("%s\n", json.c_str());
+  ASSERT_STREQ(R"(10)", json.c_str());
 }
 
 TEST(NSKeyedUnarchiverTest, DecodeBool) {
-  // TEST DATA:
-  // ```
-  // true
-  // ```
   char* buffer = nullptr;
   size_t buffer_size = 0;
   READ_CONTENT_FROM_FILE("bool_true.bplist");
@@ -207,4 +239,8 @@ TEST(NSKeyedUnarchiverTest, DecodeBool) {
   bool val = obj.ToBool();
   printf("val=%d\n", val);
   EXPECT_EQ(val, true);
+
+  std::string json = obj.ToJson();
+  printf("%s\n", json.c_str());
+  ASSERT_STREQ(R"(true)", json.c_str());
 }

@@ -74,17 +74,11 @@ class KAMap : public KAObject {
     return map_[key];
   }
   // map[key] move
-  KAValue& operator[](KeyType &&key) {
-    return map_[std::forward<KeyType>(key)];
-  }
-  
+  KAValue& operator[](KeyType&& key) { return map_[std::forward<KeyType>(key)]; }
+
   // at(key)
-  KAValue& at(const KeyType& key) {
-    return map_.at(key);
-  }
-  const KAValue& at(const KeyType& key) const {
-    return map_.at(key);
-  }
+  KAValue& at(const KeyType& key) { return map_.at(key); }
+  const KAValue& at(const KeyType& key) const { return map_.at(key); }
 
   virtual KAMap* Clone() const { return new KAMap(*this); }
   virtual KAMap* CloneByMove(KAMap&& other) const { return new KAMap(std::move(other)); }
@@ -93,6 +87,24 @@ class KAMap : public KAObject {
     return class_name_ == other.class_name_ && classes_ == other.classes_ && map_ == other.map_;
   }
   inline bool operator==(const KAMap& rhs) { return Equals(rhs); }
+
+  virtual std::string ToJson() const {
+    std::stringstream ss;
+    ss << "{";
+    size_t size = map_.size();
+    int i = 0;
+    for (const auto& kv : map_) {
+      ss << "\"" << kv.first << "\"";
+      ss << ":";
+      ss << kv.second.ToJson();
+      if (i < size - 1) {
+        ss << ",";
+      }
+      i++;
+    }
+    ss << "}";
+    return ss.str();
+  }
 
   ObjectMap& ToMap() { return map_; }
   size_t Size() const { return map_.size(); }
