@@ -51,6 +51,7 @@ class KAString : public KAObject {
   }
 
   virtual KAString* Clone() const { return new KAString(*this); }
+  virtual KAString* CloneByMove(KAString&& other) const { return new KAString(std::move(other)); }
 
   virtual bool Equals(const KAString& other) const {
     return class_name_ == other.class_name_ && classes_ == other.classes_ && str_ == other.str_;

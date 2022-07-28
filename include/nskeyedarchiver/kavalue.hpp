@@ -3,6 +3,7 @@
 
 #include <cstring>  // strcmp
 #include <sstream>
+#include <memory> // allocator, allocator_traits, unique_ptr
 
 #include "nskeyedarchiver/common.hpp"
 #include "nskeyedarchiver/kaobject.hpp"
@@ -80,6 +81,7 @@ class KAValue {
   // copy object
   explicit KAValue(const KAObject& object) : t_(DataType::Object) {
     LOG_VERBOSE("[%p] KAValue(const KAObject &object)\n", this);
+    printf("typename %s\n", typeid(object).name());
     d_.o = object.Clone();
   }
   // copy assignment operator(for KAObject)
@@ -89,21 +91,18 @@ class KAValue {
     d_.o = object.Clone();
     return *this;
   }
-  /*
-  // TODO: move object
+  // move object
   KAValue(KAObject&& object) : t_(DataType::Object) {
     LOG_VERBOSE("[%p] KAValue(KAObject &&object)\n", this);
-    d_.o = new KAObject(std::forward<KAObject>(object));
+    d_.o = object.CloneByMove(std::move(object)); // new KAMap(std::move(object))
   }
   // move assignment operator（for KAObject)
   KAValue& operator=(KAObject&& object) {
     LOG_VERBOSE("[%p] KAValue &operator=(KAObject &&object)\n", this);
     t_ = DataType::Object;
-    d_.o = new KAObject(std::forward<KAObject>(object));
-    // TODO: reset object
+    d_.o = object.CloneByMove(std::move(object)); // new KAMap(std::move(object))
     return *this;
   }
-  */
 
   // copy constructor
   KAValue(const KAValue& other) : t_(other.t_) {
@@ -240,7 +239,6 @@ class KAValue {
   bool IsStr() const { return t_ == DataType::Str; }
   bool IsObject() const { return t_ == DataType::Object; }
 
- private:
   Data d_;
   DataType t_;
 };  // KAValue

@@ -46,6 +46,7 @@ class KAObject {
   }
 
   virtual KAObject* Clone() const { return new KAObject(*this); }
+  virtual KAObject* CloneByMove(KAObject&& other) const { return new KAObject(std::move(other)); }
 
   virtual bool Equals(const KAObject& other) {
     return class_name_ == other.class_name_ && classes_ == other.classes_;

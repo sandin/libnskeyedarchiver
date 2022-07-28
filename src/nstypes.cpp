@@ -2,6 +2,7 @@
 
 #include "nskeyedarchiver/kaarray.hpp"
 #include "nskeyedarchiver/kamap.hpp"
+#include "nskeyedarchiver/kastring.hpp"
 
 using namespace nskeyedarchiver;
 
@@ -65,4 +66,20 @@ KAValue NSArray::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
   std::vector<KAValue> values = decoder->DecodeArrayOfObjectsForKey("NS.objects");
   KAArray arr(clazz.class_name, clazz.classes, std::move(values));
   return KAValue(arr);
+}
+
+
+/* -- NSString -- */
+
+// static
+KAValue NSString::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
+  LOG_INFO("NSString deserialize\n");
+  if (!decoder->ContainsValue("NS.string")) {
+    LOG_ERROR("missing NS.string.\n");
+    return KAValue();  // null
+  }
+
+  std::string s = decoder->DecodeString("NS.string");
+  KAString str(clazz.class_name, clazz.classes, std::move(s));
+  return KAValue(str);
 }

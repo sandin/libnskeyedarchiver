@@ -9,6 +9,10 @@ NSClassManager::NSClassManager() : default_deserializer_(NSDummy::Deserialize) {
   RegisterDeserializer("NSMutableDictionary", NSDictionary::Deserialize);
   RegisterDeserializer("NSArray", NSArray::Deserialize);
   RegisterDeserializer("NSMutableArray", NSArray::Deserialize);
+  RegisterDeserializer("NSSet", NSArray::Deserialize);
+  RegisterDeserializer("NSMutableSet", NSArray::Deserialize);
+  RegisterDeserializer("NSString", NSString::Deserialize);
+  RegisterDeserializer("NSMutableString", NSString::Deserialize);
 }
 
 NSClassManager::~NSClassManager() {}

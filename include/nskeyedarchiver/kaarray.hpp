@@ -77,6 +77,7 @@ class KAArray : public KAObject {
   }
 
   virtual KAArray* Clone() const { return new KAArray(*this); }
+  virtual KAArray* CloneByMove(KAArray&& other) const { return new KAArray(std::move(other)); }
 
   virtual bool Equals(const KAArray& other) const {
     return class_name_ == other.class_name_ && classes_ == other.classes_ && arr_ == other.arr_;
@@ -85,6 +86,14 @@ class KAArray : public KAObject {
 
   // arr[i] = value
   const KAValue& operator[](size_t idx) const { return arr_[idx]; }
+  
+  // at(key)
+  KAValue& at(size_t key) {
+    return arr_.at(key);
+  }
+  const KAValue& at(size_t key) const {
+    return arr_.at(key);
+  }
 
   void push_back(const KAValue& value) { arr_.push_back(value); }
   void push_back(KAValue&& value) {

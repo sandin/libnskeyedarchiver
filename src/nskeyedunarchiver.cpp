@@ -103,18 +103,13 @@ NSKeyedUnarchiver::~NSKeyedUnarchiver() {
     plist_free(plist_);
     plist_ = nullptr;
   }
-  /*
-  while (!containers_.empty()) {
-    const DecodingContext* ctx = containers_.top();
-    if (ctx) {
-      delete ctx;
-    }
-    containers_.pop();
-  }
-  */
 }
 
 KAValue NSKeyedUnarchiver::DecodeObject(const std::string& key) {
+  if (plist_ == nullptr) {
+    return KAValue(); // null
+  }
+  
   plist_t node = ObjectInCurrentDecodingContext(key);
   LOG_DEBUG("depth=%d, key=%s\n", CurrentDecodingContextDepth(), key.c_str());
   if (node == nullptr) {

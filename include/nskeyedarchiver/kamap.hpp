@@ -74,9 +74,20 @@ class KAMap : public KAObject {
     return map_[key];
   }
   // map[key] move
-  // KAValue &operator[](KeyType &&key) = delete;
+  KAValue& operator[](KeyType &&key) {
+    return map_[std::forward<KeyType>(key)];
+  }
+  
+  // at(key)
+  KAValue& at(const KeyType& key) {
+    return map_.at(key);
+  }
+  const KAValue& at(const KeyType& key) const {
+    return map_.at(key);
+  }
 
   virtual KAMap* Clone() const { return new KAMap(*this); }
+  virtual KAMap* CloneByMove(KAMap&& other) const { return new KAMap(std::move(other)); }
 
   virtual bool Equals(const KAMap& other) const {
     return class_name_ == other.class_name_ && classes_ == other.classes_ && map_ == other.map_;
