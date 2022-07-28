@@ -81,7 +81,6 @@ class KAValue {
   // copy object
   explicit KAValue(const KAObject& object) : t_(DataType::Object) {
     LOG_VERBOSE("[%p] KAValue(const KAObject &object)\n", this);
-    printf("typename %s\n", typeid(object).name());
     d_.o = object.Clone();
   }
   // copy assignment operator(for KAObject)

@@ -3,29 +3,47 @@ A library for encoding and decoding apple NSKeyedArchiver
 
 ## Usage
 
+### Library
+
 Unarchive binary plist file:
 ```c++
-FILE* f = fopen("setconfig.bplist", "rb");
-char* buffer = nullptr; 
-size_t buffer_size = 0;
-read_content_from_file(f, &buffer, &buffer_size);
-
-NSObject* obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(
-    buffer, buffer_size);
-printf("%s\n", obj->ToString());
+KAValue obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(
+    buffer, (uint32_t)buffer_size);
+printf("%s\n", obj->ToJson().c_str());
 ```
 output:
 ```
-[NSDictionary, length=3, items=[
-    "rp" : 10,
-    "tc" : [NSArray, length=1, items=[
-                [NSDictionary, length=3, items=[
-                    "uuid" : [NSString, data="2C46B61A-CDA9-4D59-B901-22E28B08C260"],
-                    "tk" : 3,
-                    "kdf2" : [NSSet, length=3, items=[630784000, 833617920, 830472456]]
-                ]
-            ]],
-    "ur" : 5000
-]]
-
+{
+    "rp": 10,
+    "tc": [
+        {
+            "kdf2": [
+                630784000,
+                833617920,
+                830472456
+            ],
+            "tk": 3,
+            "uuid": "2C46B61A-CDA9-4D59-B901-22E28B08C260"
+        }
+    ],
+    "ur": 500
+}
 ```
+
+### Tools
+
+Use command line tools to parse bplist files into json format:
+```
+$ nskeyedarchiver_tools bplist2json test.bplist
+```
+output:
+```
+{
+    "hwCPU64BitCapable": 1,
+    "hwCPUsubtype": 2,
+    "hwCPUtype": 16777228,
+    "numberOfCpus": 6,
+    "numberOfPhysicalCpus": 6
+}
+```
+

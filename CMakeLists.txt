@@ -48,6 +48,16 @@ target_link_libraries(
   PkgConfig::plist
 )
 
+# tools: nskeyedarchiver_tools
+add_executable(
+  ${PROJECT_NAME}_tools
+  tools/main.cpp
+)
+target_link_libraries(
+  ${PROJECT_NAME}_tools
+  ${PROJECT_NAME}
+)
+
 # test
 enable_testing()
 add_executable(

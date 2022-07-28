@@ -8,9 +8,14 @@
 
 #include "plist/plist.h"
 
+#ifdef NDEBUG
+#define DEBUG 0
+#define LOG_LEVEL 0
+#else
 #define DEBUG 1
-
 #define LOG_LEVEL 2
+#endif
+
 #if LOG_LEVEL >= 0
 #define LOG_ERROR(fmt, ...) \
   printf("[ERROR] %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
