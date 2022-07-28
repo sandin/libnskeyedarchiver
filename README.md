@@ -1,18 +1,18 @@
 # libnskeyedarchiver
-A library for encoding and decoding apple NSKeyedArchiver
+A library for encoding and decoding Apple's NSKeyedArchiver.
 
 ## Usage
 
 ### Library
 
-Unarchive binary plist file:
+Unarchive a binary plist file:
 ```c++
 KAValue obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(
     buffer, (uint32_t)buffer_size);
 printf("%s\n", obj->ToJson().c_str());
 ```
 output:
-```
+```json
 {
     "rp": 10,
     "tc": [
@@ -37,7 +37,7 @@ Use command line tools to parse bplist files into json format:
 $ nskeyedarchiver_tools bplist2json test.bplist
 ```
 output:
-```
+```json
 {
     "hwCPU64BitCapable": 1,
     "hwCPUsubtype": 2,
