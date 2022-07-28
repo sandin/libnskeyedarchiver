@@ -162,6 +162,36 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_GpuInfo) {
       json.c_str());
 }
 
+TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_RunningProcesses) {
+  char* buffer = nullptr;
+  size_t buffer_size = 0;
+  READ_CONTENT_FROM_FILE("nsarray_runningprocesses.bplist");
+  auto guard = make_scope_exit([&]() { free(buffer); });
+
+  KAValue obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(buffer, (uint32_t)buffer_size);
+  ASSERT_FALSE(obj.IsNull());
+  ASSERT_TRUE(obj.IsObject());
+
+  const KAArray& root = obj.ToObject<KAArray>();
+  ASSERT_STREQ(root.ClassName().c_str(), "NSMutableArray");
+  ASSERT_EQ(328, root.Size());
+  
+  // the first one
+  ASSERT_EQ(KAValue(84474), root.at(0).ToObject<KAMap>().at("pid"));
+  ASSERT_EQ(KAValue("contactsd"), root.at(0).ToObject<KAMap>().at("name"));
+  ASSERT_EQ(KAValue("/System/Library/Frameworks/Contacts.framework/Support/contactsd"), root.at(root.Size() - 1).ToObject<KAMap>().at("realAppName"));
+  ASSERT_EQ(KAValue(false), root.at(0).ToObject<KAMap>().at("isApplication"));
+  
+  // the last one
+  ASSERT_EQ(KAValue(0), root.at(root.Size() - 1).ToObject<KAMap>().at("pid"));
+  ASSERT_EQ(KAValue("Mach Kernel"), root.at(root.Size() - 1).ToObject<KAMap>().at("name"));
+  ASSERT_EQ(KAValue("mach_kernel"), root.at(root.Size() - 1).ToObject<KAMap>().at("realAppName"));
+  ASSERT_EQ(KAValue(false), root.at(root.Size() - 1).ToObject<KAMap>().at("isApplication"));
+  
+  std::string json = root.ToJson();
+  printf("%s\n", json.c_str());
+}
+
 TEST(NSKeyedUnarchiverTest, DecodeObject_NSSet_Energy) {
   char* buffer = nullptr;
   size_t buffer_size = 0;
