@@ -35,8 +35,6 @@ class NSClassManager {
   NSClassManager();
   virtual ~NSClassManager();
 
-  KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
-
   // std::map<std::string, Serializer> serializer_map_;
   std::map<std::string, Deserializer> deserializer_map_;
   NSClassManager::Deserializer default_deserializer_;

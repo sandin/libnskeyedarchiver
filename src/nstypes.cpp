@@ -68,7 +68,6 @@ KAValue NSArray::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
   return KAValue(arr);
 }
 
-
 /* -- NSString -- */
 
 // static
@@ -82,4 +81,27 @@ KAValue NSString::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) 
   std::string s = decoder->DecodeString("NS.string");
   KAString str(clazz.class_name, clazz.classes, std::move(s));
   return KAValue(str);
+}
+
+/* -- NSDate -- */
+
+// static
+KAValue NSDate::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
+  LOG_INFO("NSDate deserialize\n");
+  if (!decoder->ContainsValue("NS.time")) {
+    LOG_ERROR("missing NS.time.\n");
+    return KAValue();  // null
+  }
+  
+  double ti = decoder->DecodeDouble("NS.time");
+  KAString str(clazz.class_name, clazz.classes, std::to_string(ti + 978307200 /* 00:00:00 UTC on 1 January 2001 */)); // TODO: how to store double value inside a KAObject?
+  return KAValue(str);
+}
+
+/* -- NSNull -- */
+
+// static
+KAValue NSNull::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
+  LOG_INFO("NSNull deserialize\n");
+  return KAValue();  // null
 }

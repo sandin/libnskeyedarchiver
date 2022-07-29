@@ -13,6 +13,8 @@ NSClassManager::NSClassManager() : default_deserializer_(NSDummy::Deserialize) {
   RegisterDeserializer("NSMutableSet", NSArray::Deserialize);
   RegisterDeserializer("NSString", NSString::Deserialize);
   RegisterDeserializer("NSMutableString", NSString::Deserialize);
+  RegisterDeserializer("NSDate", NSDate::Deserialize);
+  RegisterDeserializer("NSNull", NSNull::Deserialize);
 }
 
 NSClassManager::~NSClassManager() {}
@@ -28,8 +30,4 @@ bool NSClassManager::HasDeserializer(const std::string& class_name) {
 
 NSClassManager::Deserializer& NSClassManager::GetDeserializer(const std::string& class_name) {
   return deserializer_map_[class_name];
-}
-
-KAValue NSClassManager::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
-  return KAValue();  // TODO: null
 }

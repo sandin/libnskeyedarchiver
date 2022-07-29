@@ -30,6 +30,16 @@ class NSString {
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 
+class NSNull {
+ public:
+  static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
+};
+
+class NSDate {
+ public:
+  static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
+};
+
 }  // namespace nskeyedarchiver
 
 #endif  // NSKEYEDARCHIVER_NS_TYPES_H

@@ -356,3 +356,14 @@ std::string NSKeyedUnarchiver::DecodeString(const std::string& key) {
   LOG_ERROR("%s is not a string, node_type=%d\n", key.c_str(), plist_get_node_type(value_node));
   return "";  // TODO: throw exception?
 }
+
+double NSKeyedUnarchiver::DecodeDouble(const std::string& key) {
+  double v = 0;
+  plist_t value_node = DecodeValue(key);
+  if (PLIST_IS_REAL(value_node)) {
+    plist_get_real_val(value_node, &v);
+    return v;
+  }
+  LOG_ERROR("%s is not a double, node_type=%d\n", key.c_str(), plist_get_node_type(value_node));
+  return v;
+}
