@@ -193,6 +193,48 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_RunningProcesses) {
   printf("%s\n", json.c_str());
 }
 
+TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_Networking) {
+  char* buffer = nullptr;
+  size_t buffer_size = 0;
+  READ_CONTENT_FROM_FILE("nsarray_networking.bplist");
+  auto guard = make_scope_exit([&]() { free(buffer); });
+
+  KAValue obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(buffer, (uint32_t)buffer_size);
+  ASSERT_FALSE(obj.IsNull());
+  ASSERT_TRUE(obj.IsObject());
+
+  const KAArray& root = obj.ToObject<KAArray>();
+  ASSERT_STREQ(root.ClassName().c_str(), "NSArray");
+  ASSERT_EQ(2, root.Size());
+
+  // item 0: type 1(connection-detected)
+  ASSERT_EQ(KAValue(1), root.at(0));
+
+  // item 1: data
+  const KAArray& data = root.at(1).ToObject<KAArray>();
+  ASSERT_STREQ(data.ClassName().c_str(), "NSArray");
+  ASSERT_EQ(8, data.Size());
+  int i = 0;
+  const KAValue& item0 = data.at(i++); // LocalAddress, type = data
+  ASSERT_TRUE(item0.IsRaw());
+  ASSERT_STREQ(R"("HB7GdQAAAAAkCIVWIgBIRxQL4rBTNf1ZAAAAAA==")", item0.ToJson().c_str());
+  
+  const KAValue& item1 = data.at(i++); // RemoeteAddress, type = data
+  ASSERT_TRUE(item1.IsRaw());
+  ASSERT_STREQ(R"("HB4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==")", item1.ToJson().c_str());
+  
+  ASSERT_EQ(KAValue(10), data.at(i++)); // InterfaceIndex
+  ASSERT_EQ(KAValue(-2), data.at(i++)); // Pid
+  ASSERT_EQ(KAValue(131072), data.at(i++)); // RecvBufferSize
+  ASSERT_EQ(KAValue(0), data.at(i++)); // RecvBufferUsed
+  ASSERT_EQ(KAValue(4), data.at(i++)); // SerialNumber
+  ASSERT_EQ(KAValue(1), data.at(i++)); // Kind
+
+  std::string json = root.ToJson();
+  printf("%s\n", json.c_str());
+  // TODO
+}
+
 TEST(NSKeyedUnarchiverTest, DecodeObject_NSSet_Energy) {
   char* buffer = nullptr;
   size_t buffer_size = 0;

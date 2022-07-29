@@ -25,6 +25,7 @@ include_directories(${plist_INCLUDE_DIRS})
 # library: nskeyedarchiver
 include_directories("./include")
 set(HEADERS
+  include/nskeyedarchiver/base64.hpp
   include/nskeyedarchiver/common.hpp
   include/nskeyedarchiver/kaarray.hpp
   include/nskeyedarchiver/kamap.hpp
@@ -38,6 +39,7 @@ set(HEADERS
   include/nskeyedarchiver/scope.hpp
 )
 set(SOURCES 
+  src/base64.cpp
   src/nstypes.cpp
   src/nsclassmanager.cpp
   src/nskeyedunarchiver.cpp
@@ -68,6 +70,7 @@ add_executable(
   test/kaarray_test.cpp
   test/kamap_test.cpp
   test/kastring_test.cpp
+  test/base64_test.cpp
 )
 target_link_libraries(
   ${PROJECT_NAME}_test

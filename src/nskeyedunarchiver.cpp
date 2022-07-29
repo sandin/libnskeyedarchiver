@@ -190,10 +190,23 @@ KAValue NSKeyedUnarchiver::DecodePrimitive(plist_t dereferenced_object) const {
       free(c);
       return value;
     }
+    case PLIST_DATA: {
+      char* d;
+      uint64_t size;
+      plist_get_data_val(dereferenced_object, &d, &size);
+      LOG_DEBUG("val=%p, size=%llu\n", d, size);
+      KAValue::RawData* raw = new KAValue::RawData;
+      raw->size = size;
+      raw->data = static_cast<char*>(malloc(size));
+      memcpy(raw->data, d, size);
+      
+      KAValue value(raw);
+      free(d);
+      return value;
+    }
     case PLIST_ARRAY:
     case PLIST_DICT:
     case PLIST_DATE:
-    case PLIST_DATA:
     case PLIST_KEY:
     case PLIST_UID:
     case PLIST_NONE:

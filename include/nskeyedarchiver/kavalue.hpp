@@ -1,24 +1,32 @@
 #ifndef NSKEYEDARCHIVER_KAVALUE_H
 #define NSKEYEDARCHIVER_KAVALUE_H
 
-#include <cstring>  // strcmp
+#include <cstring>  // strcmp, memcmp
+#include <string.h> // memcpy
 #include <memory>   // allocator, allocator_traits, unique_ptr
 #include <sstream>
 
 #include "nskeyedarchiver/common.hpp"
+#include "nskeyedarchiver/base64.hpp"
 #include "nskeyedarchiver/kaobject.hpp"
 
 namespace nskeyedarchiver {
 
 class KAValue {
  public:
-  enum DataType { Null, Bool, Integer, Double, Str, Object };
+  enum DataType { Null, Bool, Integer, Double, Str, Raw, Object };
+  
+  struct RawData {
+    char* data;
+    size_t size;
+  };
 
   union Data {
     bool b;
     uint64_t u;
     double d;
     char* s;
+    RawData* r;
 
     KAObject* o;
   };
@@ -76,6 +84,19 @@ class KAValue {
     d_.s = strdup(s);
     return *this;
   }
+  
+  inline static RawData* CloneRawData(RawData* r) {
+    RawData* ptr = new RawData();
+    ptr->size = r->size;
+    ptr->data = static_cast<char*>(malloc(r->size));
+    memcpy(ptr->data, r->data, r->size);
+    return ptr;
+  }
+  
+  explicit KAValue(RawData* r) : t_(DataType::Raw) {
+    LOG_VERBOSE("[%p] KAValue(RawData* r)\n", this);
+    d_.r = r;
+  }
 
   explicit KAValue(KAObject* object) : t_(DataType::Object) { d_.o = object; }
   // copy object
@@ -108,8 +129,10 @@ class KAValue {
     LOG_VERBOSE("[%p] KAValue(const KAValue &other), other=[%p]\n", this, &other);
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
+    } else if (t_ == DataType::Raw) {
+      d_.r = CloneRawData(other.d_.r); // copy RawData*
     } else if (t_ == DataType::Object) {
-      d_.o = other.d_.o->Clone();
+      d_.o = other.d_.o->Clone(); // copy Object*
     } else {
       d_ = other.d_;
     }
@@ -120,8 +143,10 @@ class KAValue {
     t_ = other.t_;
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
+    } else if (t_ == DataType::Raw) {
+      d_.r = CloneRawData(other.d_.r); // copy RawData*
     } else if (t_ == DataType::Object) {
-      d_.o = other.d_.o->Clone();
+      d_.o = other.d_.o->Clone(); // copy Object*
     } else {
       d_ = other.d_;
     }
@@ -133,6 +158,9 @@ class KAValue {
     if (t_ == DataType::Str) {
       d_.s = other.d_.s;  // move char*
       other.d_.s = nullptr;
+    } else if (t_ == DataType::Raw) {
+      d_.r = other.d_.r; // move RawData*
+      other.d_.r = nullptr;
     } else if (t_ == DataType::Object) {
       d_.o = other.d_.o;  // move object*
       other.d_.o = nullptr;
@@ -148,6 +176,9 @@ class KAValue {
     if (t_ == DataType::Str) {
       d_.s = other.d_.s;  // move char*
       other.d_.s = nullptr;
+    } else if (t_ == DataType::Raw) {
+      d_.r = other.d_.r; // move RawData*
+      other.d_.r = nullptr;
     } else if (t_ == DataType::Object) {
       d_.o = other.d_.o;  // move object*
       other.d_.o = nullptr;
@@ -173,6 +204,8 @@ class KAValue {
         return d_.d == other.d_.d;
       case DataType::Str:
         return strcmp(d_.s, other.d_.s) == 0;
+      case DataType::Raw:
+        return d_.r == other.d_.r || (d_.r->size == other.d_.r->size && memcmp(d_.r->data, other.d_.r->data, d_.r->size));
       case DataType::Object:
         return d_.o->Equals(*other.d_.o);
       default:
@@ -186,6 +219,13 @@ class KAValue {
     if (t_ == DataType::Str) {
       if (d_.s) {
         free(d_.s);
+      }
+    } else if (t_ == DataType::Raw) {
+      if (d_.r) {
+        if (d_.r->data) {
+          free(d_.r->data);
+        }
+        delete d_.r;
       }
     } else if (t_ == DataType::Object) {
       if (d_.o) {
@@ -204,6 +244,8 @@ class KAValue {
         return std::to_string(d_.d);
       case DataType::Str:
         return std::string("\"") + d_.s + "\"";
+      case DataType::Raw:
+        return std::string("\"") + base64encode(d_.r->data, d_.r->size) + "\"";
       case DataType::Object:
         return d_.o->ToJson();
       default:
@@ -215,6 +257,7 @@ class KAValue {
   bool ToBool() const { return d_.b; }
   double ToDouble() const { return d_.d; }
   const char* ToStr() const { return d_.s; }
+  const RawData* ToRaw() const { return d_.r; }
   KAObject* ToObject() { return d_.o; }
   template <class T>
   const T& ToObject() const {
@@ -228,6 +271,7 @@ class KAValue {
   bool IsBool() const { return t_ == DataType::Bool; }
   bool IsDouble() const { return t_ == DataType::Double; }
   bool IsStr() const { return t_ == DataType::Str; }
+  bool IsRaw() const { return t_ == DataType::Raw; }
   bool IsObject() const { return t_ == DataType::Object; }
 
   Data d_;
