@@ -16,6 +16,8 @@ NSClassManager::NSClassManager() : default_deserializer_(NSDummy::Deserialize) {
   RegisterDeserializer("NSDate", NSDate::Deserialize);
   RegisterDeserializer("NSError", NSError::Deserialize);
   RegisterDeserializer("NSNull", NSNull::Deserialize);
+  
+  RegisterDeserializer("DTSysmonTapMessage", DTSysmonTapMessage::Deserialize);
 }
 
 NSClassManager::~NSClassManager() {}

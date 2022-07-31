@@ -120,8 +120,22 @@ KAValue NSError::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
   
   KAMap fields(clazz.class_name, clazz.classes, {
     {"code", KAValue(code)},
-    {"domain", domain},
+    {"domain", std::move(domain)},
     {"userInfo", std::move(user_info)},
   });
   return KAValue(fields);
 }
+
+/* -- DTSysmonTapMessage -- */
+
+// static
+KAValue DTSysmonTapMessage::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
+  LOG_INFO("DTSysmonTapMessage deserialize\n");
+  
+  KAValue plist = decoder->DecodeObject("DTTapMessagePlist");
+  KAMap fields(clazz.class_name, clazz.classes, {
+    {"plist", std::move(plist)},
+  });
+  return KAValue(fields);
+}
+
