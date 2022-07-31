@@ -300,7 +300,7 @@ plist_t NSKeyedUnarchiver::ObjectInCurrentDecodingContext(const std::string& key
 }
 
 DecodingContext& NSKeyedUnarchiver::CurrentDecodingContext() {
-  ASSERT(!containers_.empty());
+  ASSERT(!containers_.empty(), "the containers_ can not be empty.\n");
   return containers_.top();
 }
 

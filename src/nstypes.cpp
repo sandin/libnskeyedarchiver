@@ -41,12 +41,18 @@ KAValue NSDictionary::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& cla
   KAMap map(clazz.class_name, clazz.classes);
   int i = 0;
   for (const KAValue& key : keys) {
-    if (!key.IsStr()) {
-      LOG_ERROR("we only support string type keys for now, unsupport type: %d.\n",
-                key.GetDataType());
+    if (key.IsStr()) {
+      map[key.ToStr()] = values[i];
+    } else if (key.IsInteger()) {
+      // some NSDictionary use the integer type index as the key, e.g.: 0, 1, 2, 3
+      // we simplify the logic by converting it to a string
+      map[std::to_string(key.ToInteger())] = values[i];
+    } else {
+      // actually, any KAValue can be used as a key, we just haven't implemented it yet.
+      LOG_ERROR("we only support string/integer type keys for now, unsupport type: %d, index: %d key: %s.\n",
+                key.GetDataType(), i, key.ToJson().c_str());
       return KAValue();  // null
     }
-    map[key.ToStr()] = values[i];
     i++;
   }
 

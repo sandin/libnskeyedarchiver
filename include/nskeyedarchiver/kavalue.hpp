@@ -195,9 +195,10 @@ class KAValue {
     }
 
     switch (t_) {
+      case DataType::Null:
+        return other.IsNull();
       case DataType::Bool:
         return d_.b == other.d_.b;
-        break;
       case DataType::Integer:
         return d_.u == other.d_.u;
       case DataType::Double:
@@ -236,6 +237,8 @@ class KAValue {
 
   std::string ToJson() const {
     switch (t_) {
+      case DataType::Null:
+        return "null";
       case DataType::Bool:
         return d_.b ? "true" : "false";
       case DataType::Integer:
@@ -249,7 +252,7 @@ class KAValue {
       case DataType::Object:
         return d_.o->ToJson();
       default:
-        ASSERT(false);
+        ASSERT(false, "unsupported t_: %d.\n", t_);
     }
   }
 

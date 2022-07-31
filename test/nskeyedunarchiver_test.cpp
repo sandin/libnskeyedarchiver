@@ -162,6 +162,26 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_GpuInfo) {
       json.c_str());
 }
 
+TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_GpuCounters) {
+  char* buffer = nullptr;
+  size_t buffer_size = 0;
+  READ_CONTENT_FROM_FILE("nsarray_gpucounters.bplist");
+  auto guard = make_scope_exit([&]() { free(buffer); });
+
+  KAValue obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(buffer, (uint32_t)buffer_size);
+  ASSERT_FALSE(obj.IsNull());
+  ASSERT_TRUE(obj.IsObject());
+
+  const KAArray& root = obj.ToObject<KAArray>();
+  printf("root typeid: %s.\n", typeid(root).name());
+  ASSERT_STREQ(root.ClassName().c_str(), "NSArray");
+  ASSERT_EQ(6, root.Size());
+
+  std::string json = root.ToJson();
+  printf("%s\n", json.c_str());
+  //TODO: ASSERT_STREQ(R"({rp:10,tc:[{kdf2:[630784000,833617920,830472456],tk:3,uuid:"2C46B61A-CDA9-4D59-B901-22E28B08C260"}],ur:500})", json.c_str());
+}
+
 TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_RunningProcesses) {
   char* buffer = nullptr;
   size_t buffer_size = 0;
@@ -232,7 +252,9 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_Networking) {
 
   std::string json = root.ToJson();
   printf("%s\n", json.c_str());
-  // TODO
+  ASSERT_STREQ(
+      R"([1,["HB7GdQAAAAAkCIVWIgBIRxQL4rBTNf1ZAAAAAA==","HB4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",10,18446744073709551614,131072,0,4,1]])",
+      json.c_str());
 }
 
 TEST(NSKeyedUnarchiverTest, DecodeObject_NSSet_Energy) {

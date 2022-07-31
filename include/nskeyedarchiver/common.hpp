@@ -18,7 +18,7 @@
 
 #if LOG_LEVEL >= 0
 #define LOG_ERROR(fmt, ...) \
-  printf("[ERROR] %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
+  fprintf(stderr, "[ERROR] %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
 #define LOG_ERROR(fmt, ...)
 #endif
@@ -41,7 +41,7 @@
 #define LOG_VERBOSE(fmt, ...)
 #endif
 
-#define ASSERT(exp) assert(exp)
+#define ASSERT(exp, fmt, ...) if (!exp) { LOG_ERROR(fmt, ##__VA_ARGS__); } assert(exp)
 
 inline void print_plist_as_xml(plist_t node) {
   char* xml = nullptr;
