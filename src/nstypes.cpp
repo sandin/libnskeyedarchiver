@@ -94,8 +94,10 @@ KAValue NSDate::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
   }
   
   double ti = decoder->DecodeDouble("NS.time");
-  KAString str(clazz.class_name, clazz.classes, std::to_string(ti + 978307200 /* 00:00:00 UTC on 1 January 2001 */)); // TODO: how to store double value inside a KAObject?
-  return KAValue(str);
+  KAMap fields(clazz.class_name, clazz.classes, {
+    {"time", KAValue(std::to_string(ti + 978307200 /* 00:00:00 UTC on 1 January 2001 */).c_str())}
+  });
+  return KAValue(fields);
 }
 
 /* -- NSNull -- */
@@ -104,4 +106,22 @@ KAValue NSDate::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
 KAValue NSNull::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
   LOG_INFO("NSNull deserialize\n");
   return KAValue();  // null
+}
+
+/* -- NSError -- */
+
+// static
+KAValue NSError::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
+  LOG_INFO("NSError deserialize\n");
+  
+  uint64_t code = decoder->DecodeInteger("NSCode");
+  KAValue domain = decoder->DecodeObject("NSDomain");
+  KAValue user_info = decoder->DecodeObject("NSUserInfo");
+  
+  KAMap fields(clazz.class_name, clazz.classes, {
+    {"code", KAValue(code)},
+    {"domain", domain},
+    {"userInfo", std::move(user_info)},
+  });
+  return KAValue(fields);
 }

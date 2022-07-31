@@ -31,6 +31,15 @@ class KAMap : public KAObject {
         "class_name=%s\n",
         this, class_name_.c_str());
   }
+  // copy constructor for initializer_list
+  KAMap(const std::string& class_name, const std::vector<std::string>& classes,
+          std::initializer_list<std::pair<const KeyType, KAValue>> list)
+      : KAObject(class_name, classes), map_(list) {
+    LOG_VERBOSE(
+        "[%p] KAObject(const std::string& class_name, "
+        "std::initializer_list<KVValue> list), class_name=%s\n",
+        this, class_name_.c_str());
+  }
   // move constructor for map
   KAMap(const std::string& class_name, const std::vector<std::string>& classes, ObjectMap&& map)
       : KAObject(class_name, classes), map_(std::forward<ObjectMap>(map)) {

@@ -33,6 +33,7 @@ class NSKeyedUnarchiver {
   std::vector<KAValue> DecodeArrayOfObjectsForKey(const std::string& key);
   std::string DecodeString(const std::string& key);
   double DecodeDouble(const std::string& key);
+  uint64_t DecodeInteger(const std::string& key);
 
   static KAValue UnarchiveTopLevelObjectWithData(const char* data, size_t length);
 

@@ -14,6 +14,7 @@ NSClassManager::NSClassManager() : default_deserializer_(NSDummy::Deserialize) {
   RegisterDeserializer("NSString", NSString::Deserialize);
   RegisterDeserializer("NSMutableString", NSString::Deserialize);
   RegisterDeserializer("NSDate", NSDate::Deserialize);
+  RegisterDeserializer("NSError", NSError::Deserialize);
   RegisterDeserializer("NSNull", NSNull::Deserialize);
 }
 
