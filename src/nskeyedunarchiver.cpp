@@ -4,15 +4,10 @@
 #include <cstring>  // for strcmp
 
 #include "nskeyedarchiver/common.hpp"
+#include "nskeyedarchiver/nskeyedarchiver.hpp"  // NSKeyedArchiveRootObjectKey...
 #include "nskeyedarchiver/scope.hpp"
 
 using namespace nskeyedarchiver;
-
-static const char* NSKeyedArchiveRootObjectKey = "root";
-
-static const char* NSKeyedArchiveNullObjectReferenceName = "$null";
-static uint64_t NSKeyedArchivePlistVersion = 100000;
-static uint32_t NSKeyedArchiverSystemVersion = 2000;
 
 inline static std::string get_string_from_plist(plist_t node) {
   std::string result = "";
@@ -47,11 +42,11 @@ inline static std::vector<std::string> get_string_list_from_plist(plist_t array_
 KAValue NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(const char* data, size_t length) {
   NSClassManager& class_manager = NSClassManager::GetInstance();
   NSKeyedUnarchiver unarchiver(&class_manager, data, length);
-  return unarchiver.DecodeObject(NSKeyedArchiveRootObjectKey);
+  return unarchiver.DecodeObject(kNSKeyedArchiveRootObjectKey);
 }
 
-NSKeyedUnarchiver::NSKeyedUnarchiver(NSClassManager* class_factory, const char* data, size_t length)
-    : class_manager_(class_factory) {
+NSKeyedUnarchiver::NSKeyedUnarchiver(NSClassManager* class_manager, const char* data, size_t length)
+    : class_manager_(class_manager) {
   plist_t plist = nullptr;
   plist_from_bin(data, length, &plist);
   if (plist == nullptr) {
@@ -75,7 +70,7 @@ NSKeyedUnarchiver::NSKeyedUnarchiver(NSClassManager* class_factory, const char* 
 
   plist_t version_node = plist_dict_get_item(plist, "$version");
   if (version_node == nullptr ||
-      plist_uint_val_compare(version_node, NSKeyedArchivePlistVersion) != 0) {
+      plist_uint_val_compare(version_node, kNSKeyedArchivePlistVersion) != 0) {
     LOG_ERROR("Unknown archiver version. the data may be corrupt.\n");
     return;
   }
@@ -107,9 +102,9 @@ NSKeyedUnarchiver::~NSKeyedUnarchiver() {
 
 KAValue NSKeyedUnarchiver::DecodeObject(const std::string& key) {
   if (plist_ == nullptr) {
-    return KAValue(); // null
+    return KAValue();  // null
   }
-  
+
   plist_t node = ObjectInCurrentDecodingContext(key);
   LOG_DEBUG("depth=%d, key=%s\n", CurrentDecodingContextDepth(), key.c_str());
   if (node == nullptr) {
@@ -136,7 +131,7 @@ KAValue NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
   //#endif
 
   if (PLIST_IS_STRING(dereferenced_object) &&
-      plist_string_val_compare(dereferenced_object, NSKeyedArchiveNullObjectReferenceName) == 0) {
+      plist_string_val_compare(dereferenced_object, kNSKeyedArchiveNullObjectReferenceName) == 0) {
     return KAValue();  // It's `$null`
   }
 
@@ -199,7 +194,7 @@ KAValue NSKeyedUnarchiver::DecodePrimitive(plist_t dereferenced_object) const {
       raw->size = size;
       raw->data = static_cast<char*>(malloc(size));
       memcpy(raw->data, d, size);
-      
+
       KAValue value(raw);
       free(d);
       return value;
@@ -269,14 +264,6 @@ NSClassManager::Deserializer& NSKeyedUnarchiver::FindClassDeserializer(const NSC
   return class_manager_->GetDefaultDeserializer();
 }
 
-std::string NSKeyedUnarchiver::EscapeArchiverKey(const std::string& key) const {
-  if (key.size() > 0 && key.at(0) == '$') {
-    return "$" + key;
-  } else {
-    return key;
-  }
-}
-
 std::string NSKeyedUnarchiver::NextGenericKey() {
   DecodingContext& ctx = CurrentDecodingContext();
   std::string key = "$" + std::to_string(ctx.generic_key);
@@ -288,7 +275,7 @@ plist_t NSKeyedUnarchiver::ObjectInCurrentDecodingContext(const std::string& key
   std::string unwrapped_key;
 
   if (!key.empty()) {
-    unwrapped_key = EscapeArchiverKey(key);
+    unwrapped_key = NSKeyedArchiver::EscapeArchiverKey(key);
   } else {
     unwrapped_key = NextGenericKey();
   }

@@ -35,6 +35,7 @@ set(HEADERS
   include/nskeyedarchiver/nstypes.hpp
   include/nskeyedarchiver/nsclass.hpp
   include/nskeyedarchiver/nsclassmanager.hpp
+  include/nskeyedarchiver/nskeyedarchiver.hpp
   include/nskeyedarchiver/nskeyedunarchiver.hpp
   include/nskeyedarchiver/scope.hpp
 )
@@ -42,6 +43,7 @@ set(SOURCES
   src/base64.cpp
   src/nstypes.cpp
   src/nsclassmanager.cpp
+  src/nskeyedarchiver.cpp
   src/nskeyedunarchiver.cpp
 )
 add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES})
@@ -64,13 +66,14 @@ target_link_libraries(
 enable_testing()
 add_executable(
   ${PROJECT_NAME}_test
-  test/nskeyedunarchiver_test.cpp
   test/kavalue_test.cpp
   test/kaobject_test.cpp
   test/kaarray_test.cpp
   test/kamap_test.cpp
   test/kastring_test.cpp
   test/base64_test.cpp
+  test/nskeyedarchiver_test.cpp
+  test/nskeyedunarchiver_test.cpp
 )
 target_link_libraries(
   ${PROJECT_NAME}_test

@@ -16,7 +16,7 @@ NSClassManager::NSClassManager() : default_deserializer_(NSDummy::Deserialize) {
   RegisterDeserializer("NSDate", NSDate::Deserialize);
   RegisterDeserializer("NSError", NSError::Deserialize);
   RegisterDeserializer("NSNull", NSNull::Deserialize);
-  
+
   RegisterDeserializer("DTSysmonTapMessage", DTSysmonTapMessage::Deserialize);
 }
 
@@ -26,11 +26,20 @@ void NSClassManager::RegisterDeserializer(const std::string& class_name,
                                           Deserializer deserializer) {
   deserializer_map_[class_name] = deserializer;
 }
+void NSClassManager::RegisterSerializer(const std::string& class_name, Serializer serializer) {
+  serializer_map_[class_name] = serializer;
+}
 
 bool NSClassManager::HasDeserializer(const std::string& class_name) {
   return deserializer_map_.find(class_name) != deserializer_map_.end();
 }
+bool NSClassManager::HasSerializer(const std::string& class_name) {
+  return serializer_map_.find(class_name) != serializer_map_.end();
+}
 
 NSClassManager::Deserializer& NSClassManager::GetDeserializer(const std::string& class_name) {
   return deserializer_map_[class_name];
+}
+NSClassManager::Serializer& NSClassManager::GetSerializer(const std::string& class_name) {
+  return serializer_map_[class_name];
 }

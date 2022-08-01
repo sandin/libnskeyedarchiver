@@ -1,13 +1,14 @@
 #ifndef NSKEYEDARCHIVER_KAVALUE_H
 #define NSKEYEDARCHIVER_KAVALUE_H
 
+#include <string.h>  // memcpy
+
 #include <cstring>  // strcmp, memcmp
-#include <string.h> // memcpy
 #include <memory>   // allocator, allocator_traits, unique_ptr
 #include <sstream>
 
-#include "nskeyedarchiver/common.hpp"
 #include "nskeyedarchiver/base64.hpp"
+#include "nskeyedarchiver/common.hpp"
 #include "nskeyedarchiver/kaobject.hpp"
 
 namespace nskeyedarchiver {
@@ -15,7 +16,7 @@ namespace nskeyedarchiver {
 class KAValue {
  public:
   enum DataType { Null, Bool, Integer, Double, Str, Raw, Object };
-  
+
   struct RawData {
     char* data;
     size_t size;
@@ -84,7 +85,7 @@ class KAValue {
     d_.s = strdup(s);
     return *this;
   }
-  
+
   inline static RawData* CloneRawData(RawData* r) {
     RawData* ptr = new RawData();
     ptr->size = r->size;
@@ -92,7 +93,7 @@ class KAValue {
     memcpy(ptr->data, r->data, r->size);
     return ptr;
   }
-  
+
   explicit KAValue(RawData* r) : t_(DataType::Raw) {
     LOG_VERBOSE("[%p] KAValue(RawData* r)\n", this);
     d_.r = r;
@@ -130,9 +131,9 @@ class KAValue {
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
     } else if (t_ == DataType::Raw) {
-      d_.r = CloneRawData(other.d_.r); // copy RawData*
+      d_.r = CloneRawData(other.d_.r);  // copy RawData*
     } else if (t_ == DataType::Object) {
-      d_.o = other.d_.o->Clone(); // copy Object*
+      d_.o = other.d_.o->Clone();  // copy Object*
     } else {
       d_ = other.d_;
     }
@@ -144,9 +145,9 @@ class KAValue {
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
     } else if (t_ == DataType::Raw) {
-      d_.r = CloneRawData(other.d_.r); // copy RawData*
+      d_.r = CloneRawData(other.d_.r);  // copy RawData*
     } else if (t_ == DataType::Object) {
-      d_.o = other.d_.o->Clone(); // copy Object*
+      d_.o = other.d_.o->Clone();  // copy Object*
     } else {
       d_ = other.d_;
     }
@@ -159,7 +160,7 @@ class KAValue {
       d_.s = other.d_.s;  // move char*
       other.d_.s = nullptr;
     } else if (t_ == DataType::Raw) {
-      d_.r = other.d_.r; // move RawData*
+      d_.r = other.d_.r;  // move RawData*
       other.d_.r = nullptr;
     } else if (t_ == DataType::Object) {
       d_.o = other.d_.o;  // move object*
@@ -177,7 +178,7 @@ class KAValue {
       d_.s = other.d_.s;  // move char*
       other.d_.s = nullptr;
     } else if (t_ == DataType::Raw) {
-      d_.r = other.d_.r; // move RawData*
+      d_.r = other.d_.r;  // move RawData*
       other.d_.r = nullptr;
     } else if (t_ == DataType::Object) {
       d_.o = other.d_.o;  // move object*
@@ -206,7 +207,8 @@ class KAValue {
       case DataType::Str:
         return strcmp(d_.s, other.d_.s) == 0;
       case DataType::Raw:
-        return d_.r == other.d_.r || (d_.r->size == other.d_.r->size && memcmp(d_.r->data, other.d_.r->data, d_.r->size));
+        return d_.r == other.d_.r ||
+               (d_.r->size == other.d_.r->size && memcmp(d_.r->data, other.d_.r->data, d_.r->size));
       case DataType::Object:
         return d_.o->Equals(*other.d_.o);
       default:
@@ -246,6 +248,11 @@ class KAValue {
       case DataType::Double:
         return std::to_string(d_.d);
       case DataType::Str:
+        // TODO: https://www.ietf.org/rfc/rfc4627.txt
+        // All Unicode characters may be placed within the
+        // quotation marks except for the characters that must be escaped:
+        // quotation mark, reverse solidus, and the control characters (U+0000
+        // through U+001F).
         return std::string("\"") + d_.s + "\"";
       case DataType::Raw:
         return std::string("\"") + base64encode(d_.r->data, d_.r->size) + "\"";
@@ -282,6 +289,10 @@ class KAValue {
 };  // KAValue
 
 constexpr bool operator==(const KAValue& lhs, const KAValue& rhs) { return lhs.Equals(rhs); }
+
+struct KAValueComparator {
+  bool operator()(const KAValue& lhs, const KAValue& rhs) const { return lhs.Equals(rhs); }
+};
 
 }  // namespace nskeyedarchiver
 

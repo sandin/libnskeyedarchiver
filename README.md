@@ -5,7 +5,7 @@ A library for encoding and decoding Apple's NSKeyedArchiver.
 
 ### Library
 
-Unarchive a binary plist file:
+**Decode a binary plist file:**
 ```c++
 KAValue obj = NSKeyedUnarchiver::UnarchiveTopLevelObjectWithData(
     buffer, (uint32_t)buffer_size);
@@ -29,6 +29,16 @@ output:
     "ur": 500
 }
 ```
+
+**Encode a object to binary plist format:**
+```c++
+const KAValue& object = KAValue(true);
+char* buffer = nullptr;
+size_t buffer_size = 0;
+NSKeyedArchiver::ArchivedData(object, &buffer, &buffer_size,
+                            NSKeyedArchiver::OutputFormat::Binary);
+```
+
 
 ### Tools
 

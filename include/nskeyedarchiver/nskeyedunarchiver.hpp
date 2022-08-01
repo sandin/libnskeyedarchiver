@@ -51,7 +51,6 @@ class NSKeyedUnarchiver {
   void PopDecodingContext();
 
   std::string NextGenericKey();
-  std::string EscapeArchiverKey(const std::string& key) const;
 
   bool IsContainer(plist_t node) const;
 
