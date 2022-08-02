@@ -86,7 +86,7 @@ class KAValue {
     return *this;
   }
 
-  inline static RawData* CloneRawData(RawData* r) {
+  inline static RawData* CloneRawData(const RawData* r) {
     RawData* ptr = new RawData();
     ptr->size = r->size;
     ptr->data = static_cast<char*>(malloc(r->size));
@@ -98,8 +98,22 @@ class KAValue {
     LOG_VERBOSE("[%p] KAValue(RawData* r)\n", this);
     d_.r = r;
   }
+  explicit KAValue(const RawData& r) : t_(DataType::Raw) {
+    LOG_VERBOSE("[%p] KAValue(const RawData& r)\n", this);
+    d_.r = CloneRawData(&r); // copy
+  }
+  // copy assignment operator(for KAObject)
+  KAValue& operator=(const RawData& r) {
+    LOG_VERBOSE("[%p] KAValue &operator=(const RawData &r)\n", this);
+    t_ = DataType::Raw;
+    d_.r = CloneRawData(&r); // copy
+    return *this;
+  }
 
-  explicit KAValue(KAObject* object) : t_(DataType::Object) { d_.o = object; }
+  explicit KAValue(KAObject* object) : t_(DataType::Object) {
+    LOG_VERBOSE("[%p] KAValue(KAObject* object)\n", this);
+    d_.o = object;
+  }
   // copy object
   explicit KAValue(const KAObject& object) : t_(DataType::Object) {
     LOG_VERBOSE("[%p] KAValue(const KAObject &object)\n", this);
@@ -205,12 +219,12 @@ class KAValue {
       case DataType::Double:
         return d_.d == other.d_.d;
       case DataType::Str:
-        return strcmp(d_.s, other.d_.s) == 0;
+        return d_.s == other.d_.s || strcmp(d_.s, other.d_.s) == 0;
       case DataType::Raw:
         return d_.r == other.d_.r ||
-               (d_.r->size == other.d_.r->size && memcmp(d_.r->data, other.d_.r->data, d_.r->size));
+               (d_.r->size == other.d_.r->size && memcmp(d_.r->data, other.d_.r->data, d_.r->size) == 0);
       case DataType::Object:
-        return d_.o->Equals(*other.d_.o);
+        return d_.o == other.d_.o || d_.o->Equals(*other.d_.o);
       default:
         return false;
     }

@@ -36,7 +36,7 @@ bool NSKeyedArchiver::ArchivedData(const KAValue& object, char** data, size_t* s
 
 void NSKeyedArchiver::EncodeObject(const KAValue& object, const std::string& key) {
   ObjectRef object_ref = EncodeObject(object);
-  if (object_ref != -1) {
+  if (object_ref != nullptr) {
     SetObjectInCurrentEncodingContext(object_ref, key, !key.empty());
   } else {
     LOG_ERROR("can not encode object for key: %s.\n", key.c_str());
@@ -44,8 +44,9 @@ void NSKeyedArchiver::EncodeObject(const KAValue& object, const std::string& key
 }
 
 NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) {
-  ObjectRef object_ref = ReferenceObject(object);
-
+  ObjectRef object_ref = nullptr;
+  
+  NSKeyedArchiverUID object_uid = ReferenceObject(object);
   if (!HaveVisited(object)) {
     plist_t encoding_object = nullptr;
     if (IsContainer(object)) {
@@ -55,22 +56,26 @@ NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) 
       NSClassManager::Serializer& serializer = FindClassSerializer(clazz);
 
       PushEncodingContext(EncodingContext());
-      plist_t encoding_object = serializer(this, clazz);
+      plist_t encoded_object = serializer(this, clazz);
 
-      // TODO
+      NSKeyedArchiverUID class_uid = ReferenceClass(clazz);
+      SetObjectInCurrentEncodingContext(class_uid.AsRef(), "$class", false);
+      const EncodingContext& ctx = CurrentEncodingContext();
+      encoding_object = ctx.dict;
+      PopEncodingContext();
     } else {
       LOG_DEBUG("Is Primitive\n");
-      // TODO
-      encoding_object = EncodePrimitive(object);
+      encoding_object = EncodePrimitive(object);  // TODO: do we need wrap it with a reference?
     }
 
-    SetObject(encoding_object, object_ref);
+    SetObject(object_uid, encoding_object);  // repleace the placeholder with the object just encoded
+  } else {
+    LOG_DEBUG("this object hsa been visited. object=%s\n", object.ToJson().c_str());
   }
   return object_ref;
 }
 
 plist_t NSKeyedArchiver::EncodePrimitive(const KAValue& object) {
-  //   enum DataType { Null, Bool, Integer, Double, Str, Raw, Object };
   switch (object.GetDataType()) {
     case KAValue::Null:
       return null_object_;
@@ -112,33 +117,72 @@ NSClass NSKeyedArchiver::GetNSClass(const KAValue& object) const {
 
 bool NSKeyedArchiver::IsContainer(const KAValue& object) const { return object.IsObject(); }
 
-NSKeyedArchiver::ObjectRef NSKeyedArchiver::ReferenceObject(const KAValue& object) {
+NSKeyedArchiverUID NSKeyedArchiver::ReferenceObject(const KAValue& object) {
   if (object.IsNull()) {
-    return kNSKeyedArchiverNullObjectReferenceUid;
+    return NSKeyedArchiverUID(kNSKeyedArchiverNullObjectReferenceUid);
   }
 
-  NSKeyedArchiverUID uid = -1;
-  auto found = obj_ref_map_.find(object);
-  if (found != obj_ref_map_.end()) {
+  NSKeyedArchiverUID uid;
+  auto found = obj_uid_map_.find(object);
+  if (found != obj_uid_map_.end()) {
+    // this object has already been referenced, just return it's reference
+    // NOTE: if two Objects are equal, then them share the same reference
+    uid = found->second;
+  } else {
+    // first time to visit this object
+    // use the index of objects array as the reference of this object
+    uid = objects_.size();
+    obj_uid_map_[object] = uid;
+    objects_.emplace_back(nullptr);  // this object has not been encoded yet, so we use the
+                                     // `nullptr` as a placeholder(index = uid)
+  }
+  return uid;
+}
+
+NSKeyedArchiverUID NSKeyedArchiver::ReferenceClass(const NSClass& clazz) {
+  NSKeyedArchiverUID uid;
+  const std::string& class_name = clazz.class_name;
+  auto found = class_uid_map_.find(class_name);
+  if (found != class_uid_map_.end()) {
     uid = found->second;
   } else {
     uid = objects_.size();
-    obj_ref_map_[object] = uid;
-    objects_.emplace_back(nullptr);  // nullptr as a placeholder at position [uid]
+    class_uid_map_[class_name] = uid;
+    objects_.emplace_back(EncodeClass(clazz));
   }
-
-  return uid;  // TODO:
+  return uid;
 }
 
-void NSKeyedArchiver::SetObject(plist_t encoding_object, NSKeyedArchiverUID reference) {
-  objects_[reference] = encoding_object;
+plist_t NSKeyedArchiver::EncodeClass(const NSClass& clazz) {
+  plist_t dict = plist_new_dict();
+  plist_dict_set_item(dict, "$classname", plist_new_string(clazz.class_name.c_str()));
+
+  plist_t classes = plist_new_array();
+  for (const auto& clazz : clazz.classes) {
+    plist_array_append_item(classes, plist_new_string(clazz.c_str()));
+  }
+  plist_dict_set_item(dict, "$classes", classes);
+
+  if (clazz.classhints.size() > 0) {
+    plist_t classhints = plist_new_array();
+    for (const auto& clazz : clazz.classhints) {
+      plist_array_append_item(classhints, plist_new_string(clazz.c_str()));
+    }
+    plist_dict_set_item(dict, "$classhints", classhints);
+  }
+
+  return dict;
+}
+
+void NSKeyedArchiver::SetObject(NSKeyedArchiverUID uid, plist_t encoding_object) {
+  objects_[uid.Value()] = encoding_object;
 }
 
 bool NSKeyedArchiver::HaveVisited(const KAValue& object) {
   if (object.IsNull()) {
     return false;  // always have a null reference
   } else {
-    return obj_ref_map_.find(object) != obj_ref_map_.end();
+    return obj_uid_map_.find(object) != obj_uid_map_.end();
   }
 }
 
@@ -169,7 +213,8 @@ void NSKeyedArchiver::SetObjectInCurrentEncodingContext(ObjectRef object_ref,
   }
 
   EncodingContext& ctx = CurrentEncodingContext();
-  ctx.dict[encoding_key] = object_ref;
+  plist_dict_set_item(ctx.dict, encoding_key.c_str(),
+                      object_ref);  // ctx.dict[encoding_key] = object_ref;
 }
 
 // static
@@ -205,22 +250,25 @@ void NSKeyedArchiver::GetEncodedData(char** data, size_t* size) {
 plist_t NSKeyedArchiver::FinishEncoding() {
   plist_t plist = plist_new_dict();
 
-  plist_dict_set_item(plist, "$archiver", plist_new_string(kNSKeyedArchiveName));
   plist_dict_set_item(plist, "$version", plist_new_uint(kNSKeyedArchivePlistVersion));
+  plist_dict_set_item(plist, "$archiver", plist_new_string(kNSKeyedArchiveName));
+
+  plist_t top = plist_new_dict();
+  ASSERT(containers_.size() == 1, "the stack has more the one item.\n");
+  EncodingContext& ctx = CurrentEncodingContext();
+  /*
+  for (auto kv : ctx.dict) {
+    plist_t uid = plist_new_uid(kv.second);
+    plist_dict_set_item(top, kv.first.c_str(), uid);
+  }
+  */
+  plist_dict_set_item(plist, "$top", ctx.dict);
 
   plist_t objects = plist_new_array();
   for (plist_t object : objects_) {
     plist_array_append_item(objects, object);
   }
   plist_dict_set_item(plist, "$objects", objects);
-
-  plist_t top = plist_new_dict();
-  EncodingContext& ctx = CurrentEncodingContext();
-  for (auto kv : ctx.dict) {
-    plist_t uid = plist_new_uid(kv.second);
-    plist_dict_set_item(top, kv.first.c_str(), uid);
-  }
-  plist_dict_set_item(plist, "$top", top);
 
   return plist;
 }

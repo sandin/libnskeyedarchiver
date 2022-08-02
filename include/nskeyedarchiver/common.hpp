@@ -41,7 +41,7 @@
 #define LOG_VERBOSE(fmt, ...)
 #endif
 
-#define ASSERT(exp, fmt, ...) if (!exp) { LOG_ERROR(fmt, ##__VA_ARGS__); } assert(exp)
+#define ASSERT(exp, fmt, ...) if (!(exp)) { LOG_ERROR(fmt, ##__VA_ARGS__); } assert(exp)
 
 inline void print_plist_as_xml(plist_t node) {
   char* xml = nullptr;

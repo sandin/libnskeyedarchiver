@@ -22,20 +22,46 @@ static const char kNSKeyedArchiveNullObjectReferenceName[] = "$null";
 static const uint64_t kNSKeyedArchivePlistVersion = 100000;
 static const uint32_t kNSKeyedArchiverSystemVersion = 2000;
 static const uint32_t kNSKeyedArchiverNullObjectReferenceUid = 0;
-
-using NSKeyedArchiverUID = int32_t;
+static const int32_t kInvalidNSKeyedArchiverUID = -1;
 
 struct EncodingContext {
-  std::map<std::string, NSKeyedArchiverUID> dict;  // the object container that is being encoded
+  plist_t dict;  // the object container that is being encoded, type: PLIST_DICT
   uint64_t generic_key;
 
-  EncodingContext() : generic_key(0) {}
+  EncodingContext() : generic_key(0), dict(plist_new_dict()) {}
+  ~EncodingContext() {
+    // NOTE: DO NOT FREE THE `dict`.
+    // Although it was created by `EncodingContext`, but after encoding,
+    // it will be placed in the `plist_t_` and its ownership will be transferred to
+    // `NSKeyedArchiver` `NSKeyedArchiver` is responsible for freeing it
+  }
 };
+
+class NSKeyedArchiverUID {
+ public:
+  NSKeyedArchiverUID() : value_(kInvalidNSKeyedArchiverUID) {}
+  NSKeyedArchiverUID(int64_t value) : value_(value) {}
+
+  ~NSKeyedArchiverUID() {}
+
+  bool IsValid() const { return value_ == kInvalidNSKeyedArchiverUID; }
+
+  uint64_t Value() const { return static_cast<uint64_t>(value_); }
+
+  plist_t AsRef() {
+    return plist_new_uid(value_);  // delayed initialization
+  }
+
+ private:
+  plist_t uid_plist_ = nullptr;
+  int64_t value_;
+};  // class NSKeyedArchiverUID
 
 class NSKeyedArchiver {
  public:
-  using ObjectRef = NSKeyedArchiverUID;
-  using ObjectRefMap = std::map<KAValue, ObjectRef, KAValueComparator>;
+  using ObjectRef = plist_t;  // TYPE: PLIST_UID
+  using ObjectUidMap = std::map<KAValue, NSKeyedArchiverUID, KAValueComparator>;
+  using ClassUidMap = std::map<std::string, NSKeyedArchiverUID>;
   enum OutputFormat { Xml, Binary };
 
   NSKeyedArchiver(NSClassManager* class_manager);
@@ -53,11 +79,14 @@ class NSKeyedArchiver {
 
  private:
   ObjectRef EncodeObject(const KAValue& object);
-  ObjectRef ReferenceObject(const KAValue& object);
-  plist_t EncodePrimitive(const KAValue& object);
-  void SetObject(plist_t encoding_object, NSKeyedArchiverUID reference);
+  NSKeyedArchiverUID ReferenceObject(const KAValue& object);
+  NSKeyedArchiverUID ReferenceClass(const NSClass& clazz);
 
+  plist_t EncodeClass(const NSClass& clazz);
+  plist_t EncodePrimitive(const KAValue& object);
   plist_t FinishEncoding();
+
+  void SetObject(NSKeyedArchiverUID uid, plist_t encoding_object);
 
   EncodingContext& CurrentEncodingContext();
   int CurrentEncodingContextDepth() const;
@@ -82,9 +111,12 @@ class NSKeyedArchiver {
   OutputFormat output_format_;
   plist_t plist_ = nullptr;
   plist_t null_object_ = nullptr;
-  ObjectRefMap obj_ref_map_;
+  ObjectUidMap obj_uid_map_;  // record the uid of each Object, same Object(equals) has
+                              // the same uid
+  ClassUidMap class_uid_map_;
   std::string error_;
-  std::vector<plist_t> objects_;
+  std::vector<plist_t> objects_;  // the `$objects` array, the index of the element is the
+                                  // reference(uid) of the object
   std::stack<EncodingContext> containers_;
   NSClassManager* class_manager_;
 
