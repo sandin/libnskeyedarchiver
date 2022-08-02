@@ -100,13 +100,13 @@ class KAValue {
   }
   explicit KAValue(const RawData& r) : t_(DataType::Raw) {
     LOG_VERBOSE("[%p] KAValue(const RawData& r)\n", this);
-    d_.r = CloneRawData(&r); // copy
+    d_.r = CloneRawData(&r);  // copy
   }
   // copy assignment operator(for KAObject)
   KAValue& operator=(const RawData& r) {
     LOG_VERBOSE("[%p] KAValue &operator=(const RawData &r)\n", this);
     t_ = DataType::Raw;
-    d_.r = CloneRawData(&r); // copy
+    d_.r = CloneRawData(&r);  // copy
     return *this;
   }
 
@@ -221,8 +221,8 @@ class KAValue {
       case DataType::Str:
         return d_.s == other.d_.s || strcmp(d_.s, other.d_.s) == 0;
       case DataType::Raw:
-        return d_.r == other.d_.r ||
-               (d_.r->size == other.d_.r->size && memcmp(d_.r->data, other.d_.r->data, d_.r->size) == 0);
+        return d_.r == other.d_.r || (d_.r->size == other.d_.r->size &&
+                                      memcmp(d_.r->data, other.d_.r->data, d_.r->size) == 0);
       case DataType::Object:
         return d_.o == other.d_.o || d_.o->Equals(*other.d_.o);
       default:
@@ -232,7 +232,7 @@ class KAValue {
   inline bool operator==(const KAValue& rhs) { return Equals(rhs); }
 
   ~KAValue() {
-    LOG_VERBOSE("[%p] ~KAValue, %s\n", this, Dump().c_str());
+    LOG_VERBOSE("[%p] ~KAValue, %s\n", this, ToJson().c_str());
     if (t_ == DataType::Str) {
       if (d_.s) {
         free(d_.s);
@@ -282,9 +282,9 @@ class KAValue {
   double ToDouble() const { return d_.d; }
   const char* ToStr() const { return d_.s; }
   const RawData* ToRaw() const { return d_.r; }
-  KAObject* ToObject() { return d_.o; }
+  const KAObject* ToObject() const { return d_.o; }
   template <class T>
-  const T& ToObject() const {
+  const T& AsObject() const {
     T* ptr = static_cast<T*>(d_.o);
     return *ptr;
   }

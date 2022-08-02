@@ -2,9 +2,9 @@
 #define NSKEYEDARCHIVER_KASTRING_H
 
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 #include "nskeyedarchiver/kaobject.hpp"
 
@@ -14,7 +14,7 @@ class KAString : public KAObject {
  public:
   KAString(const std::string& class_name, const std::vector<std::string>& classes,
            const std::string& str)
-      : KAObject(class_name, classes), str_(str) {
+      : KAObject(StringKind, class_name, classes), str_(str) {
     LOG_VERBOSE(
         "[%p] KAString(std::string class_name, const char* str), "
         "class_name=%s, str=%s\n",
@@ -51,15 +51,21 @@ class KAString : public KAObject {
     return *this;
   }
 
-  virtual KAString* Clone() const { return new KAString(*this); }
-  virtual KAString* CloneByMove(KAString&& other) const { return new KAString(std::move(other)); }
+  virtual KAString* Clone() const override { return new KAString(*this); }
+  virtual KAString* CloneByMove(KAObject&& other) const override {
+    ASSERT(other.GetKind() == StringKind, "can not copy a difference kind object.\n");
+    return new KAString(std::move(static_cast<KAString&&>(other)));
+  }
 
-  virtual bool Equals(const KAString& other) const {
-    return class_name_ == other.class_name_ && classes_ == other.classes_ && str_ == other.str_;
+  virtual bool Equals(const KAObject& other) const override {
+    ASSERT(other.GetKind() == StringKind, "can not copy a difference kind object.\n");
+    const KAString&& o = static_cast<const KAString&&>(other);
+    return kind_ == o.kind_ && class_name_ == o.class_name_ && classes_ == o.classes_ &&
+           str_ == o.str_;
   }
   inline bool operator==(const KAString& rhs) { return Equals(rhs); }
 
-  virtual std::string ToJson() const {
+  virtual std::string ToJson() const override {
     std::stringstream ss;
     ss << "\"" << str_ + "\"";
     return ss.str();

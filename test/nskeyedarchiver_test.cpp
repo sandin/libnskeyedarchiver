@@ -150,17 +150,26 @@ TEST(NSKeyedArchiverTest, EncodeStr) {
 }
 
 TEST(NSKeyedArchiverTest, EncodeRaw) {
-  char raw[] = { 0x00, 0x01, 0x02, 0x03, 0x04 };
+  char raw[] = {0x00, 0x01, 0x02, 0x03, 0x04};
   const KAValue& object = KAValue(KAValue::RawData{raw, sizeof(raw)});
-    
+
   ARCHIVED_DATA(object);
   ASSERT_EQ(2, OBJECTS_COUNT);
   ASSERT_STREQ("$null", plist_get_std_string(GET_OBJECT(0)).c_str());
-  // TODO
-  
+
   char* data;
   uint64_t size;
   plist_get_data_val(GET_OBJECT(1), &data, &size);
   ASSERT_TRUE(memcmp(raw, data, size) == 0);
   free(data);
+}
+
+TEST(NSKeyedArchiverTest, EncodeObject_KAArray) {
+  KAArray arr("NSArray", {"NSArray", "NSObject"}, {KAValue(3), KAValue(36079887892856llu)});
+  const KAValue& object = KAValue(std::move(arr));
+
+  ARCHIVED_DATA(object);
+  ASSERT_EQ(3, OBJECTS_COUNT);
+  ASSERT_STREQ("$null", plist_get_std_string(GET_OBJECT(0)).c_str());
+  // TODO
 }

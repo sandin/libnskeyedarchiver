@@ -55,21 +55,7 @@ TEST(KAObjectTest, MoveCtor) {
 
 TEST(KAObjectTest, IsA) {
   KAObject obj("NSString", {"NSString", "NSObject"});
-  ASSERT_TRUE(obj.IsA("NSString"));
-
-  ASSERT_FALSE(obj.IsA("NSObject"));
-  ASSERT_FALSE(obj.IsA("NSArray"));
-  ASSERT_FALSE(obj.IsA("NSMap"));
-}
-
-TEST(KAObjectTest, IsInstanceOf) {
-  KAObject obj("NSMutableString", {"NSMutableString", "NSString", "NSObject"});
-  ASSERT_TRUE(obj.IsInstanceOf("NSMutableString"));
-  ASSERT_TRUE(obj.IsInstanceOf("NSString"));
-  ASSERT_TRUE(obj.IsInstanceOf("NSObject"));
-
-  ASSERT_FALSE(obj.IsInstanceOf("NSArray"));
-  ASSERT_FALSE(obj.IsInstanceOf("NSMap"));
+  ASSERT_TRUE(obj.IsA(KAObject::Kind::ObjectKind));
 }
 
 TEST(KAObjectTest, Equals) {

@@ -56,7 +56,7 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSDictionary_SetConfig) {
   ASSERT_FALSE(obj.IsNull());
   ASSERT_TRUE(obj.IsObject());
 
-  const KAMap& root = obj.ToObject<KAMap>();
+  const KAMap& root = obj.AsObject<KAMap>();
   printf("root typeid: %s.\n", typeid(root).name());
   ASSERT_STREQ(root.ClassName().c_str(), "NSDictionary");
   ASSERT_EQ(3, root.Size());
@@ -71,19 +71,19 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSDictionary_SetConfig) {
 
   const KAValue& tc = root.at("tc");
   ASSERT_TRUE(tc.IsObject());
-  const KAArray& tc_arr = tc.ToObject<KAArray>();
+  const KAArray& tc_arr = tc.AsObject<KAArray>();
   ASSERT_STREQ("NSArray", tc_arr.ClassName().c_str());
   ASSERT_EQ(1, tc_arr.Size());
 
   const KAValue& tc_item_0 = tc_arr.at(0);
   ASSERT_TRUE(tc_item_0.IsObject());
-  const KAMap& tc_item_map = tc_item_0.ToObject<KAMap>();
+  const KAMap& tc_item_map = tc_item_0.AsObject<KAMap>();
   ASSERT_STREQ("NSMutableDictionary", tc_item_map.ClassName().c_str());
   ASSERT_EQ(3, tc_item_map.Size());
 
   const KAValue& uuid = tc_item_map.at("uuid");
   ASSERT_TRUE(uuid.IsObject());
-  const KAString& uuid_string = uuid.ToObject<KAString>();
+  const KAString& uuid_string = uuid.AsObject<KAString>();
   ASSERT_STREQ("NSMutableString", uuid_string.ClassName().c_str());
   ASSERT_STREQ("2C46B61A-CDA9-4D59-B901-22E28B08C260", uuid_string.ToString().c_str());
 
@@ -93,7 +93,7 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSDictionary_SetConfig) {
 
   const KAValue& kdf2 = tc_item_map.at("kdf2");
   ASSERT_TRUE(kdf2.IsObject());
-  const KAArray& kdf2_set = kdf2.ToObject<KAArray>();
+  const KAArray& kdf2_set = kdf2.AsObject<KAArray>();
   ASSERT_STREQ("NSMutableSet", kdf2_set.ClassName().c_str());
   ASSERT_EQ(3, kdf2_set.Size());
 
@@ -127,24 +127,24 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_GpuInfo) {
   ASSERT_FALSE(obj.IsNull());
   ASSERT_TRUE(obj.IsObject());
 
-  const KAArray& root = obj.ToObject<KAArray>();
+  const KAArray& root = obj.AsObject<KAArray>();
   ASSERT_STREQ(root.ClassName().c_str(), "NSMutableArray");
   ASSERT_EQ(1, root.Size());
 
-  const KAMap& item_0 = root.at(0).ToObject<KAMap>();
+  const KAMap& item_0 = root.at(0).AsObject<KAMap>();
   ASSERT_STREQ(item_0.ClassName().c_str(), "NSDictionary");
   ASSERT_EQ(15, item_0.Size());
 
   ASSERT_EQ(KAValue(4294967998LL), item_0.at("accelerator-id"));
   ASSERT_EQ(KAValue("3.24.4"), item_0.at("agx-tracecode-version"));
   ASSERT_EQ(KAValue("A13"), item_0.at("device-name"));
-  ASSERT_EQ("NSMutableArray", item_0.at("displays").ToObject<KAArray>().ClassName());
+  ASSERT_EQ("NSMutableArray", item_0.at("displays").AsObject<KAArray>().ClassName());
   ASSERT_EQ(KAValue("A13"), item_0.at("family-name"));
   ASSERT_EQ(KAValue(false), item_0.at("headless"));
   ASSERT_EQ(KAValue(false), item_0.at("low-power"));
   ASSERT_EQ(KAValue(0), item_0.at("min-collection-interval"));
   ASSERT_EQ(KAValue(true), item_0.at("mobile"));
-  ASSERT_EQ("NSMutableDictionary", item_0.at("perf-state").ToObject<KAMap>().ClassName());
+  ASSERT_EQ("NSMutableDictionary", item_0.at("perf-state").AsObject<KAMap>().ClassName());
   ASSERT_EQ(KAValue(""), item_0.at("product-name"));
   ASSERT_EQ(
       KAValue(2620473344LL),
@@ -152,7 +152,7 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_GpuInfo) {
           "recommended-max-working-set-size"));  // https://developer.apple.com/documentation/metal/mtldevice/2369280-recommendedmaxworkingsetsize
   ASSERT_EQ(KAValue(false), item_0.at("removable"));
   ASSERT_EQ("NSMutableArray",
-            item_0.at("supported-counter-profiles").ToObject<KAArray>().ClassName());
+            item_0.at("supported-counter-profiles").AsObject<KAArray>().ClassName());
   ASSERT_EQ(KAValue("Apple"), item_0.at("vendor-name"));
 
   std::string json = root.ToJson();
@@ -172,14 +172,16 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_GpuCounters) {
   ASSERT_FALSE(obj.IsNull());
   ASSERT_TRUE(obj.IsObject());
 
-  const KAArray& root = obj.ToObject<KAArray>();
+  const KAArray& root = obj.AsObject<KAArray>();
   printf("root typeid: %s.\n", typeid(root).name());
   ASSERT_STREQ(root.ClassName().c_str(), "NSArray");
   ASSERT_EQ(6, root.Size());
 
   std::string json = root.ToJson();
   printf("%s\n", json.c_str());
-  //TODO: ASSERT_STREQ(R"({rp:10,tc:[{kdf2:[630784000,833617920,830472456],tk:3,uuid:"2C46B61A-CDA9-4D59-B901-22E28B08C260"}],ur:500})", json.c_str());
+  // TODO:
+  // ASSERT_STREQ(R"({rp:10,tc:[{kdf2:[630784000,833617920,830472456],tk:3,uuid:"2C46B61A-CDA9-4D59-B901-22E28B08C260"}],ur:500})",
+  // json.c_str());
 }
 
 TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_RunningProcesses) {
@@ -192,22 +194,22 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_RunningProcesses) {
   ASSERT_FALSE(obj.IsNull());
   ASSERT_TRUE(obj.IsObject());
 
-  const KAArray& root = obj.ToObject<KAArray>();
+  const KAArray& root = obj.AsObject<KAArray>();
   ASSERT_STREQ(root.ClassName().c_str(), "NSMutableArray");
   ASSERT_EQ(328, root.Size());
 
   // the first one
-  ASSERT_EQ(KAValue(84474), root.at(0).ToObject<KAMap>().at("pid"));
-  ASSERT_EQ(KAValue("contactsd"), root.at(0).ToObject<KAMap>().at("name"));
+  ASSERT_EQ(KAValue(84474), root.at(0).AsObject<KAMap>().at("pid"));
+  ASSERT_EQ(KAValue("contactsd"), root.at(0).AsObject<KAMap>().at("name"));
   ASSERT_EQ(KAValue("/System/Library/Frameworks/Contacts.framework/Support/contactsd"),
-            root.at(root.Size() - 1).ToObject<KAMap>().at("realAppName"));
-  ASSERT_EQ(KAValue(false), root.at(0).ToObject<KAMap>().at("isApplication"));
+            root.at(root.Size() - 1).AsObject<KAMap>().at("realAppName"));
+  ASSERT_EQ(KAValue(false), root.at(0).AsObject<KAMap>().at("isApplication"));
 
   // the last one
-  ASSERT_EQ(KAValue(0), root.at(root.Size() - 1).ToObject<KAMap>().at("pid"));
-  ASSERT_EQ(KAValue("Mach Kernel"), root.at(root.Size() - 1).ToObject<KAMap>().at("name"));
-  ASSERT_EQ(KAValue("mach_kernel"), root.at(root.Size() - 1).ToObject<KAMap>().at("realAppName"));
-  ASSERT_EQ(KAValue(false), root.at(root.Size() - 1).ToObject<KAMap>().at("isApplication"));
+  ASSERT_EQ(KAValue(0), root.at(root.Size() - 1).AsObject<KAMap>().at("pid"));
+  ASSERT_EQ(KAValue("Mach Kernel"), root.at(root.Size() - 1).AsObject<KAMap>().at("name"));
+  ASSERT_EQ(KAValue("mach_kernel"), root.at(root.Size() - 1).AsObject<KAMap>().at("realAppName"));
+  ASSERT_EQ(KAValue(false), root.at(root.Size() - 1).AsObject<KAMap>().at("isApplication"));
 
   std::string json = root.ToJson();
   printf("%s\n", json.c_str());
@@ -223,7 +225,7 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_Networking) {
   ASSERT_FALSE(obj.IsNull());
   ASSERT_TRUE(obj.IsObject());
 
-  const KAArray& root = obj.ToObject<KAArray>();
+  const KAArray& root = obj.AsObject<KAArray>();
   ASSERT_STREQ(root.ClassName().c_str(), "NSArray");
   ASSERT_EQ(2, root.Size());
 
@@ -231,24 +233,24 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSArray_Networking) {
   ASSERT_EQ(KAValue(1), root.at(0));
 
   // item 1: data
-  const KAArray& data = root.at(1).ToObject<KAArray>();
+  const KAArray& data = root.at(1).AsObject<KAArray>();
   ASSERT_STREQ(data.ClassName().c_str(), "NSArray");
   ASSERT_EQ(8, data.Size());
   int i = 0;
-  const KAValue& item0 = data.at(i++); // LocalAddress, type = data
+  const KAValue& item0 = data.at(i++);  // LocalAddress, type = data
   ASSERT_TRUE(item0.IsRaw());
   ASSERT_STREQ(R"("HB7GdQAAAAAkCIVWIgBIRxQL4rBTNf1ZAAAAAA==")", item0.ToJson().c_str());
-  
-  const KAValue& item1 = data.at(i++); // RemoeteAddress, type = data
+
+  const KAValue& item1 = data.at(i++);  // RemoeteAddress, type = data
   ASSERT_TRUE(item1.IsRaw());
   ASSERT_STREQ(R"("HB4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==")", item1.ToJson().c_str());
-  
-  ASSERT_EQ(KAValue(10), data.at(i++)); // InterfaceIndex
-  ASSERT_EQ(KAValue(-2), data.at(i++)); // Pid
-  ASSERT_EQ(KAValue(131072), data.at(i++)); // RecvBufferSize
-  ASSERT_EQ(KAValue(0), data.at(i++)); // RecvBufferUsed
-  ASSERT_EQ(KAValue(4), data.at(i++)); // SerialNumber
-  ASSERT_EQ(KAValue(1), data.at(i++)); // Kind
+
+  ASSERT_EQ(KAValue(10), data.at(i++));      // InterfaceIndex
+  ASSERT_EQ(KAValue(-2), data.at(i++));      // Pid
+  ASSERT_EQ(KAValue(131072), data.at(i++));  // RecvBufferSize
+  ASSERT_EQ(KAValue(0), data.at(i++));       // RecvBufferUsed
+  ASSERT_EQ(KAValue(4), data.at(i++));       // SerialNumber
+  ASSERT_EQ(KAValue(1), data.at(i++));       // Kind
 
   std::string json = root.ToJson();
   printf("%s\n", json.c_str());
@@ -267,7 +269,7 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSSet_Energy) {
   ASSERT_FALSE(obj.IsNull());
   ASSERT_TRUE(obj.IsObject());
 
-  const KAArray& root = obj.ToObject<KAArray>();
+  const KAArray& root = obj.AsObject<KAArray>();
   ASSERT_STREQ(root.ClassName().c_str(), "NSSet");
   ASSERT_EQ(7, root.Size());
 

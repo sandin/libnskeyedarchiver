@@ -16,7 +16,7 @@ class KAMap : public KAObject {
   using ObjectMap = std::map<KeyType, KAValue>;
 
   KAMap(const std::string& class_name, const std::vector<std::string>& classes)
-      : KAObject(class_name, classes) {
+      : KAObject(MapKind, class_name, classes) {
     LOG_VERBOSE(
         "[%p] KAMap(const std::string& class_name), "
         "class_name=%s\n",
@@ -25,7 +25,7 @@ class KAMap : public KAObject {
   // copy constructor for map
   KAMap(const std::string& class_name, const std::vector<std::string>& classes,
         const ObjectMap& map)
-      : KAObject(class_name, classes), map_(map) {
+      : KAObject(MapKind, class_name, classes), map_(map) {
     LOG_VERBOSE(
         "[%p] KAMap(const std::string& class_name, const ObjectMap& map), "
         "class_name=%s\n",
@@ -33,8 +33,8 @@ class KAMap : public KAObject {
   }
   // copy constructor for initializer_list
   KAMap(const std::string& class_name, const std::vector<std::string>& classes,
-          std::initializer_list<std::pair<const KeyType, KAValue>> list)
-      : KAObject(class_name, classes), map_(list) {
+        std::initializer_list<std::pair<const KeyType, KAValue>> list)
+      : KAObject(MapKind, class_name, classes), map_(list) {
     LOG_VERBOSE(
         "[%p] KAObject(const std::string& class_name, "
         "std::initializer_list<KVValue> list), class_name=%s\n",
@@ -42,7 +42,7 @@ class KAMap : public KAObject {
   }
   // move constructor for map
   KAMap(const std::string& class_name, const std::vector<std::string>& classes, ObjectMap&& map)
-      : KAObject(class_name, classes), map_(std::forward<ObjectMap>(map)) {
+      : KAObject(MapKind, class_name, classes), map_(std::forward<ObjectMap>(map)) {
     LOG_VERBOSE(
         "[%p] KAMap(const std::string& class_name, ObjectMap &&map), "
         "class_name=%s\n",
@@ -89,15 +89,21 @@ class KAMap : public KAObject {
   KAValue& at(const KeyType& key) { return map_.at(key); }
   const KAValue& at(const KeyType& key) const { return map_.at(key); }
 
-  virtual KAMap* Clone() const { return new KAMap(*this); }
-  virtual KAMap* CloneByMove(KAMap&& other) const { return new KAMap(std::move(other)); }
+  virtual KAMap* Clone() const override { return new KAMap(*this); }
+  virtual KAMap* CloneByMove(KAObject&& other) const override {
+    ASSERT(other.GetKind() == MapKind, "can not copy a difference kind object.\n");
+    return new KAMap(std::move(static_cast<KAMap&&>(other)));
+  }
 
-  virtual bool Equals(const KAMap& other) const {
-    return class_name_ == other.class_name_ && classes_ == other.classes_ && map_ == other.map_;
+  virtual bool Equals(const KAObject& other) const override {
+    ASSERT(other.GetKind() == MapKind, "can not copy a difference kind object.\n");
+    const KAMap&& o = static_cast<const KAMap&&>(other);
+    return kind_ == o.kind_ && class_name_ == o.class_name_ && classes_ == o.classes_ &&
+           map_ == o.map_;
   }
   inline bool operator==(const KAMap& rhs) { return Equals(rhs); }
 
-  virtual std::string ToJson() const {
+  virtual std::string ToJson() const override {
     std::stringstream ss;
     ss << "{";
     size_t size = map_.size();

@@ -45,9 +45,10 @@ void NSKeyedArchiver::EncodeObject(const KAValue& object, const std::string& key
 
 NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) {
   ObjectRef object_ref = nullptr;
-  
+
+  bool have_visited = HaveVisited(object);
   NSKeyedArchiverUID object_uid = ReferenceObject(object);
-  if (!HaveVisited(object)) {
+  if (!have_visited) {
     plist_t encoding_object = nullptr;
     if (IsContainer(object)) {
       LOG_DEBUG("Is Container\n");
@@ -56,7 +57,7 @@ NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) 
       NSClassManager::Serializer& serializer = FindClassSerializer(clazz);
 
       PushEncodingContext(EncodingContext());
-      plist_t encoded_object = serializer(this, clazz);
+      plist_t encoded_object = serializer(this, clazz, object);
 
       NSKeyedArchiverUID class_uid = ReferenceClass(clazz);
       SetObjectInCurrentEncodingContext(class_uid.AsRef(), "$class", false);
@@ -68,7 +69,8 @@ NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) 
       encoding_object = EncodePrimitive(object);  // TODO: do we need wrap it with a reference?
     }
 
-    SetObject(object_uid, encoding_object);  // repleace the placeholder with the object just encoded
+    SetObject(object_uid,
+              encoding_object);  // repleace the placeholder with the object just encoded
   } else {
     LOG_DEBUG("this object hsa been visited. object=%s\n", object.ToJson().c_str());
   }
@@ -110,8 +112,8 @@ NSClassManager::Serializer& NSKeyedArchiver::FindClassSerializer(const NSClass& 
 
 NSClass NSKeyedArchiver::GetNSClass(const KAValue& object) const {
   if (object.IsObject()) {
-    const KAObject inner_obj = object.ToObject<KAObject>();
-    return NSClass{inner_obj.ClassName(), inner_obj.Classes(), {}};
+    const KAObject* inner_obj = object.ToObject();
+    return NSClass{inner_obj->ClassName(), inner_obj->Classes(), {/* classhints */}};
   }
 }
 
@@ -180,7 +182,7 @@ void NSKeyedArchiver::SetObject(NSKeyedArchiverUID uid, plist_t encoding_object)
 
 bool NSKeyedArchiver::HaveVisited(const KAValue& object) {
   if (object.IsNull()) {
-    return false;  // always have a null reference
+    return true;  // always have a null reference
   } else {
     return obj_uid_map_.find(object) != obj_uid_map_.end();
   }

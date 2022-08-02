@@ -16,7 +16,7 @@ class KAArray : public KAObject {
   using ObjectList = std::vector<KAValue>;
 
   KAArray(const std::string& class_name, const std::vector<std::string>& classes)
-      : KAObject(class_name, classes) {
+      : KAObject(ArrayKind, class_name, classes) {
     LOG_VERBOSE(
         "[%p] KAArray(const std::string& class_name, const ObjectList& arr), "
         "class_name=%s\n",
@@ -25,7 +25,7 @@ class KAArray : public KAObject {
   // copy constructor for vector
   KAArray(const std::string& class_name, const std::vector<std::string>& classes,
           const ObjectList& arr)
-      : KAObject(class_name, classes), arr_(arr) {
+      : KAObject(ArrayKind, class_name, classes), arr_(arr) {
     LOG_VERBOSE(
         "[%p] KAArray(const std::string& class_name, const ObjectList& arr), "
         "class_name=%s\n",
@@ -34,15 +34,15 @@ class KAArray : public KAObject {
   // copy constructor for initializer_list
   KAArray(const std::string& class_name, const std::vector<std::string>& classes,
           std::initializer_list<KAValue> list)
-      : KAObject(class_name, classes), arr_(list) {
+      : KAObject(ArrayKind, class_name, classes), arr_(list) {
     LOG_VERBOSE(
-        "[%p] KAObject(const std::string& class_name, "
+        "[%p] KAArray(const std::string& class_name, "
         "std::initializer_list<KVValue> list), class_name=%s\n",
         this, class_name_.c_str());
   }
   // move constructor for vector
   KAArray(const std::string& class_name, const std::vector<std::string>& classes, ObjectList&& arr)
-      : KAObject(class_name, classes), arr_(std::forward<ObjectList>(arr)) {
+      : KAObject(ArrayKind, class_name, classes), arr_(std::forward<ObjectList>(arr)) {
     LOG_VERBOSE(
         "[%p] KAArray(std::string class_name, ObjectList&& arr), "
         "class_name=%s\n",
@@ -77,15 +77,21 @@ class KAArray : public KAObject {
     return *this;
   }
 
-  virtual KAArray* Clone() const { return new KAArray(*this); }
-  virtual KAArray* CloneByMove(KAArray&& other) const { return new KAArray(std::move(other)); }
+  virtual KAArray* Clone() const override { return new KAArray(*this); }
+  virtual KAArray* CloneByMove(KAObject&& other) const override {
+    ASSERT(other.GetKind() == ArrayKind, "can not copy a difference kind object.\n");
+    return new KAArray(std::move(static_cast<KAArray&&>(other)));
+  }
 
-  virtual bool Equals(const KAArray& other) const {
-    return class_name_ == other.class_name_ && classes_ == other.classes_ && arr_ == other.arr_;
+  virtual bool Equals(const KAObject& other) const override {
+    ASSERT(other.GetKind() == ArrayKind, "can not copy a difference kind object.\n");
+    const KAArray&& o = static_cast<const KAArray&&>(other);
+    return kind_ == o.kind_ && class_name_ == o.class_name_ && classes_ == o.classes_ &&
+           arr_ == o.arr_;
   }
   inline bool operator==(const KAArray& rhs) { return Equals(rhs); }
 
-  virtual std::string ToJson() const {
+  virtual std::string ToJson() const override {
     std::stringstream ss;
     ss << "[";
 

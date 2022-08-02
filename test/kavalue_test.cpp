@@ -127,14 +127,14 @@ TEST(KAValueTest, Ctor_Object) {
   KAObject obj("NSObject", {"NSObject"});
   KAValue value(obj);
   ASSERT_TRUE(value.IsObject());
-  ASSERT_STREQ(obj.ClassName().c_str(), value.ToObject<KAObject>().ClassName().c_str());
+  ASSERT_STREQ(obj.ClassName().c_str(), value.AsObject<KAObject>().ClassName().c_str());
 
   /*
   // copy assignment
   KAValue value1;
   value1 = obj;
   ASSERT_TRUE(value1.IsObject());
-  ASSERT_STREQ(obj.ClassName().c_str(), value1.ToObject<KAObject>().ClassName().c_str());
+  ASSERT_STREQ(obj.ClassName().c_str(), value1.AsObject<KAObject>().ClassName().c_str());
   */
 }
 
@@ -206,25 +206,25 @@ TEST(KAValueTest, CopyAndMoveCtor_Object) {
   // copy ctor
   KAValue cloned1(value);
   ASSERT_TRUE(cloned1.IsObject());
-  ASSERT_STREQ(obj.ClassName().c_str(), cloned1.ToObject<KAObject>().ClassName().c_str());
+  ASSERT_STREQ(obj.ClassName().c_str(), cloned1.AsObject<KAObject>().ClassName().c_str());
   ASSERT_TRUE(value.IsObject());  // untouched
 
   // copy assignment operator
   KAValue cloned2 = value;
   ASSERT_TRUE(cloned2.IsObject());
-  ASSERT_STREQ(obj.ClassName().c_str(), cloned2.ToObject<KAObject>().ClassName().c_str());
+  ASSERT_STREQ(obj.ClassName().c_str(), cloned2.AsObject<KAObject>().ClassName().c_str());
   ASSERT_TRUE(value.IsObject());  // untouched
 
   // move ctor
   KAValue value2(std::move(value));
   ASSERT_TRUE(value2.IsObject());
-  ASSERT_STREQ(obj.ClassName().c_str(), value2.ToObject<KAObject>().ClassName().c_str());
+  ASSERT_STREQ(obj.ClassName().c_str(), value2.AsObject<KAObject>().ClassName().c_str());
   ASSERT_TRUE(value.IsNull());  // reset the moved value
 
   // move assignment operator
   KAValue value3 = std::move(value2);
   ASSERT_TRUE(value3.IsObject());
-  ASSERT_STREQ(obj.ClassName().c_str(), value3.ToObject<KAObject>().ClassName().c_str());
+  ASSERT_STREQ(obj.ClassName().c_str(), value3.AsObject<KAObject>().ClassName().c_str());
   ASSERT_TRUE(value2.IsNull());  // reset the moved value
 }
 

@@ -11,17 +11,22 @@ namespace nskeyedarchiver {
 
 class KAObject {
  public:
-  KAObject(const std::string& class_name, const std::vector<std::string>& classes)
-      : class_name_(class_name), classes_(classes) {
+  enum Kind { InvalidKind, ObjectKind, MapKind, ArrayKind, StringKind };
+
+  KAObject(Kind kind, const std::string& class_name, const std::vector<std::string>& classes)
+      : kind_(kind), class_name_(class_name), classes_(classes) {
     LOG_VERBOSE(
-        "[%p] KAObject(const std::string& class_name, const "
-        "std::vector<std::string>& classes), "
+        "[%p] KAObject(Kind kind, const std::string& class_name, const "
+        "std::vector<std::string>& classes), kind=%d, "
         "class_name=%s\n",
-        this, class_name.c_str());
+        this, kind, class_name.c_str());
   }
+  KAObject(const std::string& class_name, const std::vector<std::string>& classes)
+      : KAObject(ObjectKind, class_name, classes) {}
 
   // copy constructor
-  KAObject(const KAObject& other) : class_name_(other.class_name_), classes_(other.classes_) {
+  KAObject(const KAObject& other)
+      : kind_(ObjectKind), class_name_(other.class_name_), classes_(other.classes_) {
     LOG_VERBOSE("[%p] KAObject(const KAObject &other[%p])\n", this, &other);
   }
   // copy assignment operator
@@ -34,7 +39,9 @@ class KAObject {
 
   // move constructor
   KAObject(KAObject&& other)
-      : class_name_(std::move(other.class_name_)), classes_(std::move(other.classes_)) {
+      : kind_(other.kind_),
+        class_name_(std::move(other.class_name_)),
+        classes_(std::move(other.classes_)) {
     LOG_VERBOSE("[%p] KAObject(KAObject &&other[%p])\n", this, &other);
   }
   // move assignment operator
@@ -48,8 +55,8 @@ class KAObject {
   virtual KAObject* Clone() const { return new KAObject(*this); }
   virtual KAObject* CloneByMove(KAObject&& other) const { return new KAObject(std::move(other)); }
 
-  virtual bool Equals(const KAObject& other) {
-    return class_name_ == other.class_name_ && classes_ == other.classes_;
+  virtual bool Equals(const KAObject& other) const {
+    return kind_ == other.kind_ && class_name_ == other.class_name_ && classes_ == other.classes_;
   }
   inline bool operator==(const KAObject& rhs) { return Equals(rhs); }
 
@@ -59,22 +66,14 @@ class KAObject {
 
   const std::string& ClassName() const { return class_name_; }
   const std::vector<std::string>& Classes() const { return classes_; }
-
-  bool IsA(const std::string& class_name) { return class_name == class_name_; }
-  bool IsInstanceOf(const std::string& class_name) {
-    for (auto& cls : classes_) {
-      if (cls == class_name) {
-        return true;
-      }
-    }
-    return false;
-  }
+  Kind GetKind() const { return kind_; }
+  bool IsA(Kind kind) const { return kind == kind_; }
 
  protected:
+  const Kind kind_;
+
   std::string class_name_;
   std::vector<std::string> classes_;
-
-  bool empty_;
 };  // KAObject
 
 }  // namespace nskeyedarchiver
