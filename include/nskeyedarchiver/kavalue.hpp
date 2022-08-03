@@ -305,7 +305,7 @@ class KAValue {
 constexpr bool operator==(const KAValue& lhs, const KAValue& rhs) { return lhs.Equals(rhs); }
 
 struct KAValueComparator {
-  bool operator()(const KAValue& lhs, const KAValue& rhs) const { return lhs.Equals(rhs); }
+  bool operator()(const KAValue& lhs, const KAValue& rhs) const { return !lhs.Equals(rhs); }
 };
 
 }  // namespace nskeyedarchiver

@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "nskeyedarchiver/kaarray.hpp"
 #include "nskeyedarchiver/kaobject.hpp"
 #include "nskeyedarchiver/kavalue.hpp"
 #include "nskeyedarchiver/nsclass.hpp"
@@ -68,6 +69,8 @@ class NSKeyedArchiver {
   virtual ~NSKeyedArchiver();
 
   void EncodeObject(const KAValue& object, const std::string& key);
+  void EncodeArrayOfObjects(const KAArray& array, const std::string& key);
+
   // Caller is responsible for freeing the output data.
   void GetEncodedData(char** data, size_t* size);
 
@@ -84,13 +87,15 @@ class NSKeyedArchiver {
 
   plist_t EncodeClass(const NSClass& clazz);
   plist_t EncodePrimitive(const KAValue& object);
+  void EncodeValue(ObjectRef plist, const std::string& key);
   plist_t FinishEncoding();
 
   void SetObject(NSKeyedArchiverUID uid, plist_t encoding_object);
 
   EncodingContext& CurrentEncodingContext();
   int CurrentEncodingContextDepth() const;
-  void SetObjectInCurrentEncodingContext(ObjectRef object_ref, const std::string& key, bool escape);
+  void SetObjectInCurrentEncodingContext(ObjectRef object_ref, const std::string& key,
+                                         bool escape = true);
   void PushEncodingContext(EncodingContext&& decoding_context);
   void PopEncodingContext();
 

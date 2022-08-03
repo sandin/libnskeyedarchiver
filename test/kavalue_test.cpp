@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 #include <sys/stat.h>
 
+#include <map>
+
 #include "nskeyedarchiver/kaobject.hpp"
 
 using namespace nskeyedarchiver;
@@ -250,4 +252,32 @@ TEST(KAValueTest, Equals) {
   ASSERT_FALSE(KAValue(KAObject("NSString", {"NSString", "NSObject"})) ==
                KAValue(KAObject("NSArray", {"NSArray", "NSObject"})));
   ASSERT_FALSE(KAValue(KAObject("NSString", {"NSString", "NSObject"})) == KAValue());
+}
+
+TEST(KAValueTest, KAValueComparator) {
+  std::map<KAValue, int, KAValueComparator> map;
+  KAValue not_exists_key("not exists");
+
+  KAValue null_as_key;
+  map[null_as_key] = 0;
+  ASSERT_TRUE(map.find(null_as_key) != map.end());
+  ASSERT_TRUE(map.find(KAValue()) != map.end());
+  ASSERT_FALSE(map.find(not_exists_key) != map.end());
+  map.clear();
+
+  KAValue str_as_key("a");
+  map[str_as_key] = 0;
+  ASSERT_TRUE(map.find(str_as_key) != map.end());
+  ASSERT_TRUE(map.find(KAValue("a")) != map.end());
+  ASSERT_FALSE(map.find(not_exists_key) != map.end());
+  map.clear();
+
+  KAValue int_as_key(3);
+  map[int_as_key] = 0;
+  ASSERT_TRUE(map.find(int_as_key) != map.end());
+  ASSERT_TRUE(map.find(KAValue(3)) != map.end());
+  ASSERT_FALSE(map.find(not_exists_key) != map.end());
+  map.clear();
+
+  // TODO: test other type as key
 }

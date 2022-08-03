@@ -6,6 +6,7 @@
 
 #include "nskeyedarchiver/kavalue.hpp"
 #include "nskeyedarchiver/nsclass.hpp"
+#include "nskeyedarchiver/nskeyedarchiver.hpp"
 #include "nskeyedarchiver/nskeyedunarchiver.hpp"
 #include "plist/plist.h"
 
@@ -13,7 +14,7 @@ namespace nskeyedarchiver {
 
 class NSDummy {
  public:
-  static plist_t Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
+  static bool Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 
@@ -24,7 +25,7 @@ class NSDictionary {
 
 class NSArray {
  public:
-  static plist_t Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
+  static bool Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 

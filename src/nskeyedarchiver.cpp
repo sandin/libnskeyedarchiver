@@ -43,9 +43,23 @@ void NSKeyedArchiver::EncodeObject(const KAValue& object, const std::string& key
   }
 }
 
-NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) {
-  ObjectRef object_ref = nullptr;
+void NSKeyedArchiver::EncodeArrayOfObjects(const KAArray& array, const std::string& key) {
+  plist_t object_refs = plist_new_array();
+  // std::vector<ObjectRef> object_refs(array.Size());
 
+  for (const KAValue& object : array.ToArray()) {
+    // object_refs.emplace_back(EncodeObject(object));
+    plist_array_append_item(object_refs, EncodeObject(object));
+  }
+
+  EncodeValue(object_refs, key);
+}
+
+void NSKeyedArchiver::EncodeValue(ObjectRef plist, const std::string& key) {
+  SetObjectInCurrentEncodingContext(plist, key);
+}
+
+NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) {
   bool have_visited = HaveVisited(object);
   NSKeyedArchiverUID object_uid = ReferenceObject(object);
   if (!have_visited) {
@@ -57,7 +71,7 @@ NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) 
       NSClassManager::Serializer& serializer = FindClassSerializer(clazz);
 
       PushEncodingContext(EncodingContext());
-      plist_t encoded_object = serializer(this, clazz, object);
+      serializer(this, clazz, object);
 
       NSKeyedArchiverUID class_uid = ReferenceClass(clazz);
       SetObjectInCurrentEncodingContext(class_uid.AsRef(), "$class", false);
@@ -69,12 +83,16 @@ NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) 
       encoding_object = EncodePrimitive(object);  // TODO: do we need wrap it with a reference?
     }
 
-    SetObject(object_uid,
-              encoding_object);  // repleace the placeholder with the object just encoded
+    // repleace the placeholder with the object just encoded
+    SetObject(object_uid, encoding_object);
   } else {
     LOG_DEBUG("this object hsa been visited. object=%s\n", object.ToJson().c_str());
   }
-  return object_ref;
+
+  // NOTE: even two uid are equal, we always create a new UID plist object as the reference of
+  // object because we don't want to have circularly referenced plist objects in the plist tree
+  // which libplist can not handle this situcation when freeing them.
+  return object_uid.AsRef();
 }
 
 plist_t NSKeyedArchiver::EncodePrimitive(const KAValue& object) {

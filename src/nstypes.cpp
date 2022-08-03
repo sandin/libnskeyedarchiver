@@ -15,8 +15,10 @@ KAValue NSDummy::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
 }
 
 // static
-plist_t NSDummy::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
-  return plist_new_string("dummpy");
+bool NSDummy::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
+  KAValue value("dummpy");
+  encoder->EncodeObject(value, "dummpy");
+  return true;
 }
 
 /* -- NSDictionary -- */
@@ -82,15 +84,17 @@ KAValue NSArray::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
 }
 
 // static
-plist_t NSArray::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
+bool NSArray::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
   LOG_DEBUG("NSArray serialize\n");
   const KAObject* obj = object.ToObject();
-  if (obj->IsA(KAObject::Kind::ArrayKind)) {
+  if (!obj->IsA(KAObject::Kind::ArrayKind)) {
+    LOG_ERROR("This KAObject is not a KAArray.\n");
+    return false;
   }
 
-  // const KAArray& array = object.ToObject<KAArray>(); // TODO: how to check it's a KAArray?
-
-  return nullptr;  // TODO
+  const KAArray& array = object.AsObject<KAArray>();
+  encoder->EncodeArrayOfObjects(array, "NS.objects");
+  return true;
 }
 
 /* -- NSString -- */

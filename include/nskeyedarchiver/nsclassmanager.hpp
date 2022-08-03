@@ -18,7 +18,7 @@ class NSKeyedUnarchiver;
 class NSClassManager {
  public:
   using Serializer =
-      std::function<plist_t(NSKeyedArchiver*, const NSClass& clazz, const KAValue& object)>;
+      std::function<bool(NSKeyedArchiver*, const NSClass& clazz, const KAValue& object)>;
   using Deserializer = std::function<KAValue(NSKeyedUnarchiver*, const NSClass& clazz)>;
 
   static NSClassManager& GetInstance() {

@@ -45,12 +45,21 @@ using namespace nskeyedarchiver;
 #define OBJECTS objects_node
 #define OBJECTS_COUNT plist_array_get_size(objects_node)
 #define GET_OBJECT(index) plist_array_get_item(objects_node, index)
+#define ASSERT_PLIST_TYPE_EQ(node, type) ASSERT_EQ(plist_get_node_type(node), type)
+#define ASSERT_PLIST_ARRAY_SIZE_EQ(node, size) ASSERT_EQ(plist_array_get_size(node), size);
+#define GET_OBJECT_REF(uid_node)               \
+  ({                                           \
+    ASSERT_PLIST_TYPE_EQ(uid_node, PLIST_UID); \
+    uint64_t uid = 0;                          \
+    plist_get_uid_val(uid_node, &uid);         \
+    GET_OBJECT(uid);                           \
+  })
 
 static inline std::string plist_get_std_string(plist_t node) {
   uint64_t length = 0;
   char* str = nullptr;
   plist_get_string_val(node, &str);
-  std::string result = str;  // copy
+  std::string result = str != nullptr ? str : "";  // copy
   free(str);
   return result;
 }
@@ -169,7 +178,31 @@ TEST(NSKeyedArchiverTest, EncodeObject_KAArray) {
   const KAValue& object = KAValue(std::move(arr));
 
   ARCHIVED_DATA(object);
-  ASSERT_EQ(3, OBJECTS_COUNT);
+  ASSERT_EQ(5, OBJECTS_COUNT);
   ASSERT_STREQ("$null", plist_get_std_string(GET_OBJECT(0)).c_str());
-  // TODO
+
+  // NS.objects
+  plist_t item_1 = GET_OBJECT(1);
+  ASSERT_PLIST_TYPE_EQ(item_1, PLIST_DICT);
+  plist_t ns_objects = plist_dict_get_item(item_1, "NS.objects");
+  ASSERT_PLIST_ARRAY_SIZE_EQ(ns_objects, 2);
+
+  // object #0
+  plist_t object_0 = GET_OBJECT_REF(plist_array_get_item(ns_objects, 0));
+  ASSERT_EQ(3, plist_get_integer(object_0));
+
+  // object #1
+  plist_t object_1 = GET_OBJECT_REF(plist_array_get_item(ns_objects, 1));
+  ASSERT_EQ(36079887892856llu, plist_get_integer(object_1));
+
+  // $class
+  plist_t ns_class_ref = plist_dict_get_item(item_1, "$class");
+  plist_t ns_class = GET_OBJECT_REF(ns_class_ref);
+  ASSERT_STREQ("NSArray",
+               plist_get_std_string(plist_dict_get_item(ns_class, "$classname")).c_str());
+  plist_t classes = plist_dict_get_item(ns_class, "$classes");
+  ASSERT_PLIST_TYPE_EQ(classes, PLIST_ARRAY);
+  ASSERT_PLIST_ARRAY_SIZE_EQ(classes, 2);
+  ASSERT_STREQ("NSArray", plist_get_std_string(plist_array_get_item(classes, 0)).c_str());
+  ASSERT_STREQ("NSObject", plist_get_std_string(plist_array_get_item(classes, 1)).c_str());
 }
