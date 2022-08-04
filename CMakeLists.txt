@@ -30,7 +30,6 @@ set(HEADERS
   include/nskeyedarchiver/kaarray.hpp
   include/nskeyedarchiver/kamap.hpp
   include/nskeyedarchiver/kaobject.hpp
-  include/nskeyedarchiver/kastring.hpp
   include/nskeyedarchiver/kavalue.hpp
   include/nskeyedarchiver/nstypes.hpp
   include/nskeyedarchiver/nsclass.hpp
@@ -70,7 +69,6 @@ add_executable(
   test/kaobject_test.cpp
   test/kaarray_test.cpp
   test/kamap_test.cpp
-  test/kastring_test.cpp
   test/base64_test.cpp
   test/nskeyedarchiver_test.cpp
   test/nskeyedunarchiver_test.cpp

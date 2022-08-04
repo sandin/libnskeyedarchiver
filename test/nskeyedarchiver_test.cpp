@@ -9,7 +9,6 @@
 #include "nskeyedarchiver/common.hpp"
 #include "nskeyedarchiver/kaarray.hpp"
 #include "nskeyedarchiver/kamap.hpp"
-#include "nskeyedarchiver/kastring.hpp"
 #include "nskeyedarchiver/kavalue.hpp"
 #include "nskeyedarchiver/scope.hpp"
 

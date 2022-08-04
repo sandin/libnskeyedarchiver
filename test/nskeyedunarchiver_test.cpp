@@ -9,7 +9,6 @@
 #include "nskeyedarchiver/common.hpp"
 #include "nskeyedarchiver/kaarray.hpp"
 #include "nskeyedarchiver/kamap.hpp"
-#include "nskeyedarchiver/kastring.hpp"
 #include "nskeyedarchiver/kavalue.hpp"
 #include "nskeyedarchiver/scope.hpp"
 
@@ -80,12 +79,6 @@ TEST(NSKeyedUnarchiverTest, DecodeObject_NSDictionary_SetConfig) {
   const KAMap& tc_item_map = tc_item_0.AsObject<KAMap>();
   ASSERT_STREQ("NSMutableDictionary", tc_item_map.ClassName().c_str());
   ASSERT_EQ(3, tc_item_map.Size());
-
-  const KAValue& uuid = tc_item_map.at("uuid");
-  ASSERT_TRUE(uuid.IsObject());
-  const KAString& uuid_string = uuid.AsObject<KAString>();
-  ASSERT_STREQ("NSMutableString", uuid_string.ClassName().c_str());
-  ASSERT_STREQ("2C46B61A-CDA9-4D59-B901-22E28B08C260", uuid_string.ToString().c_str());
 
   const KAValue& tk = tc_item_map.at("tk");
   ASSERT_TRUE(tk.IsInteger());

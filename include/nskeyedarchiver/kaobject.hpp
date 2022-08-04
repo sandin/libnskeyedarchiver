@@ -11,7 +11,7 @@ namespace nskeyedarchiver {
 
 class KAObject {
  public:
-  enum Kind { InvalidKind, ObjectKind, MapKind, ArrayKind, StringKind };
+  enum Kind { InvalidKind, ObjectKind, MapKind, ArrayKind };
 
   KAObject(Kind kind, const std::string& class_name, const std::vector<std::string>& classes)
       : kind_(kind), class_name_(class_name), classes_(classes) {
