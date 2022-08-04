@@ -5,6 +5,7 @@
 
 #include <map>
 
+#include "nskeyedarchiver/kamap.hpp"
 #include "nskeyedarchiver/kaobject.hpp"
 
 using namespace nskeyedarchiver;
@@ -272,11 +273,24 @@ TEST(KAValueTest, KAValueComparator) {
   ASSERT_FALSE(map.find(not_exists_key) != map.end());
   map.clear();
 
-  KAValue int_as_key(3);
+  KAValue int_as_key(12);
   map[int_as_key] = 0;
   ASSERT_TRUE(map.find(int_as_key) != map.end());
-  ASSERT_TRUE(map.find(KAValue(3)) != map.end());
+  ASSERT_TRUE(map.find(KAValue(12)) != map.end());
   ASSERT_FALSE(map.find(not_exists_key) != map.end());
+  map.clear();
+
+  map[KAValue(12)] = 0;
+  map[KAValue(620331008)] = 0;
+  map[KAValue(1)] = 0;
+  map[KAValue(9961472)] = 0;
+  map[KAValue(0)] = 0;
+  map[KAValue(10140644)] = 0;
+  map[KAValue(179060736)] = 0;
+  map[KAValue(524288)] = 0;
+  map[KAValue("Built-In")] = 0;
+  map[KAValue(60)] = 0;
+  ASSERT_TRUE(map.find(KAValue(12)) != map.end());
   map.clear();
 
   // TODO: test other type as key

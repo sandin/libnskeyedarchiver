@@ -43,15 +43,21 @@ void NSKeyedArchiver::EncodeObject(const KAValue& object, const std::string& key
   }
 }
 
-void NSKeyedArchiver::EncodeArrayOfObjects(const KAArray& array, const std::string& key) {
+void NSKeyedArchiver::EncodeArrayOfObjects(const std::vector<KAValue>& array,
+                                           const std::string& key) {
   plist_t object_refs = plist_new_array();
-  // std::vector<ObjectRef> object_refs(array.Size());
-
-  for (const KAValue& object : array.ToArray()) {
-    // object_refs.emplace_back(EncodeObject(object));
+  for (const KAValue& object : array) {
     plist_array_append_item(object_refs, EncodeObject(object));
   }
+  EncodeValue(object_refs, key);
+}
 
+void NSKeyedArchiver::EncodeArrayOfObjectRefs(NSKeyedArchiver::ObjectRefArray array,
+                                              const std::string& key) {
+  plist_t object_refs = plist_new_array();
+  for (const KAValue& object : array) {
+    plist_array_append_item(object_refs, EncodeObject(object));
+  }
   EncodeValue(object_refs, key);
 }
 
@@ -60,8 +66,13 @@ void NSKeyedArchiver::EncodeValue(ObjectRef plist, const std::string& key) {
 }
 
 NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) {
-  bool have_visited = HaveVisited(object);
-  NSKeyedArchiverUID object_uid = ReferenceObject(object);
+  NSKeyedArchiverUID object_uid = GetReferencedObjectUid(object);
+  bool have_visited = object_uid.IsValid() || object.IsNull();  // always have a null reference
+  LOG_DEBUG("object=%s, have_visited=%d.\n", object.ToJson().c_str(), have_visited);
+  if (!object_uid.IsValid()) {
+    // first time to visit this object
+    object_uid = ReferenceObject(object);
+  }  // else this object has already been referenced
   if (!have_visited) {
     plist_t encoding_object = nullptr;
     if (IsContainer(object)) {
@@ -86,7 +97,7 @@ NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) 
     // repleace the placeholder with the object just encoded
     SetObject(object_uid, encoding_object);
   } else {
-    LOG_DEBUG("this object hsa been visited. object=%s\n", object.ToJson().c_str());
+    LOG_DEBUG("this object has been visited. object=%s\n", object.ToJson().c_str());
   }
 
   // NOTE: even two uid are equal, we always create a new UID plist object as the reference of
@@ -142,21 +153,16 @@ NSKeyedArchiverUID NSKeyedArchiver::ReferenceObject(const KAValue& object) {
     return NSKeyedArchiverUID(kNSKeyedArchiverNullObjectReferenceUid);
   }
 
-  NSKeyedArchiverUID uid;
-  auto found = obj_uid_map_.find(object);
-  if (found != obj_uid_map_.end()) {
-    // this object has already been referenced, just return it's reference
-    // NOTE: if two Objects are equal, then them share the same reference
-    uid = found->second;
-  } else {
-    // first time to visit this object
-    // use the index of objects array as the reference of this object
-    uid = objects_.size();
-    obj_uid_map_[object] = uid;
-    objects_.emplace_back(nullptr);  // this object has not been encoded yet, so we use the
-                                     // `nullptr` as a placeholder(index = uid)
-  }
+  // use the index of objects array as the reference of this object
+  NSKeyedArchiverUID uid = objects_.size();
+  obj_uid_map_.Put(object, uid);
+  objects_.emplace_back(nullptr);  // this object has not been encoded yet, so we use the
+                                   // `nullptr` as a placeholder(index = uid)
   return uid;
+}
+
+NSKeyedArchiverUID NSKeyedArchiver::GetReferencedObjectUid(const KAValue& object) {
+  return obj_uid_map_.Get(object, NSKeyedArchiverUID());
 }
 
 NSKeyedArchiverUID NSKeyedArchiver::ReferenceClass(const NSClass& clazz) {
@@ -196,14 +202,6 @@ plist_t NSKeyedArchiver::EncodeClass(const NSClass& clazz) {
 
 void NSKeyedArchiver::SetObject(NSKeyedArchiverUID uid, plist_t encoding_object) {
   objects_[uid.Value()] = encoding_object;
-}
-
-bool NSKeyedArchiver::HaveVisited(const KAValue& object) {
-  if (object.IsNull()) {
-    return true;  // always have a null reference
-  } else {
-    return obj_uid_map_.find(object) != obj_uid_map_.end();
-  }
 }
 
 EncodingContext& NSKeyedArchiver::CurrentEncodingContext() {

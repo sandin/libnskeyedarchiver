@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 
 #include <string>
+#include <unordered_map>
 
 #include "nskeyedarchiver/common.hpp"
 #include "nskeyedarchiver/kaarray.hpp"
@@ -64,20 +65,20 @@ static inline std::string plist_get_std_string(plist_t node) {
   return result;
 }
 
-static inline bool plist_get_boolean(plist_t node) {
-  uint8_t v;
+static inline bool plist_get_boolean(plist_t node, bool def_val = false) {
+  uint8_t v = def_val;
   plist_get_bool_val(node, &v);
   return v;
 }
 
-static inline uint64_t plist_get_integer(plist_t node) {
-  uint64_t v;
+static inline uint64_t plist_get_integer(plist_t node, uint64_t def_val = 0) {
+  uint64_t v = def_val;
   plist_get_uint_val(node, &v);
   return v;
 }
 
-static inline double plist_get_double(plist_t node) {
-  double v;
+static inline double plist_get_double(plist_t node, double def_val = 0) {
+  double v = def_val;
   plist_get_real_val(node, &v);
   return v;
 }
@@ -106,7 +107,7 @@ TEST(NSKeyedArchiverTest, EncodeBool_Xml) {
 */
 
 TEST(NSKeyedArchiverTest, EncodeNull) {
-  const KAValue& object = KAValue();  // nullptr
+  const KAValue object;  // nullptr
   ASSERT_TRUE(object.IsNull());
 
   ARCHIVED_DATA(object);
@@ -115,7 +116,7 @@ TEST(NSKeyedArchiverTest, EncodeNull) {
 }
 
 TEST(NSKeyedArchiverTest, EncodeBool) {
-  const KAValue& object = KAValue(true);
+  const KAValue object(true);
 
   ARCHIVED_DATA(object);
   ASSERT_EQ(2, OBJECTS_COUNT);
@@ -125,7 +126,7 @@ TEST(NSKeyedArchiverTest, EncodeBool) {
 
 TEST(NSKeyedArchiverTest, EncodeInteger) {
   uint64_t i = 3;
-  const KAValue& object = KAValue(i);
+  const KAValue object(i);
   ASSERT_EQ(i, object.ToInteger());
 
   ARCHIVED_DATA(object);
@@ -136,7 +137,7 @@ TEST(NSKeyedArchiverTest, EncodeInteger) {
 
 TEST(NSKeyedArchiverTest, EncodeDouble) {
   double d = 3.3;
-  const KAValue& object = KAValue(d);
+  const KAValue object(d);
   ASSERT_EQ(d, object.ToDouble());
 
   ARCHIVED_DATA(object);
@@ -149,7 +150,7 @@ TEST(NSKeyedArchiverTest, EncodeDouble) {
 
 TEST(NSKeyedArchiverTest, EncodeStr) {
   const char* s = "3.3";
-  const KAValue& object = KAValue(s);
+  const KAValue object(s);
   ASSERT_STREQ(s, object.ToStr());
 
   ARCHIVED_DATA(object);
@@ -160,7 +161,7 @@ TEST(NSKeyedArchiverTest, EncodeStr) {
 
 TEST(NSKeyedArchiverTest, EncodeRaw) {
   char raw[] = {0x00, 0x01, 0x02, 0x03, 0x04};
-  const KAValue& object = KAValue(KAValue::RawData{raw, sizeof(raw)});
+  const KAValue object(KAValue::RawData{raw, sizeof(raw)});
 
   ARCHIVED_DATA(object);
   ASSERT_EQ(2, OBJECTS_COUNT);
@@ -173,17 +174,19 @@ TEST(NSKeyedArchiverTest, EncodeRaw) {
   free(data);
 }
 
-TEST(NSKeyedArchiverTest, EncodeObject_KAArray) {
+TEST(NSKeyedArchiverTest, EncodeObject_NSArray) {
   KAArray arr("NSArray", {"NSArray", "NSObject"}, {KAValue(3), KAValue(36079887892856llu)});
-  const KAValue& object = KAValue(std::move(arr));
+  const KAValue object(std::move(arr));
 
   ARCHIVED_DATA(object);
   ASSERT_EQ(5, OBJECTS_COUNT);
   ASSERT_STREQ("$null", plist_get_std_string(GET_OBJECT(0)).c_str());
 
-  // NS.objects
+  // root
   plist_t item_1 = GET_OBJECT(1);
   ASSERT_PLIST_TYPE_EQ(item_1, PLIST_DICT);
+
+  // NS.objects
   plist_t ns_objects = plist_dict_get_item(item_1, "NS.objects");
   ASSERT_PLIST_ARRAY_SIZE_EQ(ns_objects, 2);
 
@@ -205,4 +208,104 @@ TEST(NSKeyedArchiverTest, EncodeObject_KAArray) {
   ASSERT_PLIST_ARRAY_SIZE_EQ(classes, 2);
   ASSERT_STREQ("NSArray", plist_get_std_string(plist_array_get_item(classes, 0)).c_str());
   ASSERT_STREQ("NSObject", plist_get_std_string(plist_array_get_item(classes, 1)).c_str());
+}
+
+TEST(NSKeyedArchiverTest, EncodeObject_NSDictionary) {
+  KAMap map("NSMutableDictionary", {"NSMutableDictionary", "NSDictionary", "NSObject"},
+            {
+                {"Device Utilization %", KAValue(12)},
+                {"Renderer Utilization %", KAValue(12)},
+                {"Alloc system memory", KAValue(620331008)},
+                {"recoveryCount", KAValue(1)},
+                {"Allocated PB Size", KAValue(9961472)},
+                {"Tiler Utilization %", KAValue(12)},
+                {"SplitSceneCount", KAValue(0)},
+                {"XRVideoCardRunTimeStamp", KAValue(10140644)},
+                {"In use system memory", KAValue(179060736)},
+                {"TiledSceneBytes", KAValue(524288)},
+                {"IOGLBundleName", KAValue("Built-In")},
+                {"CoreAnimationFramesPerSecond", KAValue(60)},
+            });
+  const KAValue object(std::move(map));
+
+  ARCHIVED_DATA(object);
+  ASSERT_EQ(25, OBJECTS_COUNT);
+  ASSERT_STREQ("$null", plist_get_std_string(GET_OBJECT(0)).c_str());
+
+  // root
+  plist_t item_1 = GET_OBJECT(1);
+  ASSERT_PLIST_TYPE_EQ(item_1, PLIST_DICT);
+
+  // NS.keys
+  plist_t ns_keys = plist_dict_get_item(item_1, "NS.keys");
+  size_t key_count = plist_array_get_size(ns_keys);
+  ASSERT_EQ(12, key_count);
+
+  // NS.objects
+  plist_t ns_objects = plist_dict_get_item(item_1, "NS.objects");
+  size_t value_count = plist_array_get_size(ns_keys);
+  ASSERT_EQ(12, value_count);
+
+  // make sure all values are correct
+  ASSERT_EQ(key_count, value_count);
+  std::unordered_map<std::string, plist_t> encoded_map;
+  for (int i = 0; i < key_count; ++i) {
+    std::string key = plist_get_std_string(GET_OBJECT_REF(plist_array_get_item(ns_keys, i)));
+    plist_t value_node = GET_OBJECT_REF(plist_array_get_item(ns_objects, i));
+    encoded_map[key] = value_node;
+  }
+  ASSERT_EQ(plist_get_integer(encoded_map["Device Utilization %"]), 12);
+  ASSERT_EQ(plist_get_integer(encoded_map["Renderer Utilization %"]), 12);
+  ASSERT_EQ(plist_get_integer(encoded_map["Alloc system memory"]), 620331008);
+  ASSERT_EQ(plist_get_integer(encoded_map["recoveryCount"]), 1);
+  ASSERT_EQ(plist_get_integer(encoded_map["Allocated PB Size"]), 9961472);
+  ASSERT_EQ(plist_get_integer(encoded_map["Tiler Utilization %"]), 12);
+  ASSERT_EQ(plist_get_integer(encoded_map["SplitSceneCount"]), 0);
+  ASSERT_EQ(plist_get_integer(encoded_map["XRVideoCardRunTimeStamp"]), 10140644);
+  ASSERT_EQ(plist_get_integer(encoded_map["In use system memory"]), 179060736);
+  ASSERT_EQ(plist_get_integer(encoded_map["TiledSceneBytes"]), 524288);
+  ASSERT_STREQ(plist_get_std_string(encoded_map["IOGLBundleName"]).c_str(), "Built-In");
+  ASSERT_EQ(plist_get_integer(encoded_map["CoreAnimationFramesPerSecond"]), 60);
+
+  // $class
+  plist_t ns_class_ref = plist_dict_get_item(item_1, "$class");
+  plist_t ns_class = GET_OBJECT_REF(ns_class_ref);
+  ASSERT_STREQ("NSMutableDictionary",
+               plist_get_std_string(plist_dict_get_item(ns_class, "$classname")).c_str());
+  plist_t classes = plist_dict_get_item(ns_class, "$classes");
+  ASSERT_PLIST_TYPE_EQ(classes, PLIST_ARRAY);
+  ASSERT_PLIST_ARRAY_SIZE_EQ(classes, 3);
+  ASSERT_STREQ("NSMutableDictionary",
+               plist_get_std_string(plist_array_get_item(classes, 0)).c_str());
+  ASSERT_STREQ("NSDictionary", plist_get_std_string(plist_array_get_item(classes, 1)).c_str());
+  ASSERT_STREQ("NSObject", plist_get_std_string(plist_array_get_item(classes, 2)).c_str());
+}
+
+TEST(NSKeyedArchiverTest, ObjectMap) {
+  KAValueUIDMap<NSKeyedArchiverUID> map;  // KAValue(12) -> uid
+
+  KAMap kamap("NSMutableDictionary", {"NSMutableDictionary", "NSDictionary", "NSObject"},
+              {
+                  {"Device Utilization %", KAValue(12)},
+                  {"Renderer Utilization %", KAValue(12)},
+                  {"Alloc system memory", KAValue(620331008)},
+                  {"recoveryCount", KAValue(1)},
+                  {"Allocated PB Size", KAValue(9961472)},
+                  {"Tiler Utilization %", KAValue(12)},
+                  {"SplitSceneCount", KAValue(0)},
+                  {"XRVideoCardRunTimeStamp", KAValue(10140644)},
+                  {"In use system memory", KAValue(179060736)},
+                  {"TiledSceneBytes", KAValue(524288)},
+                  {"IOGLBundleName", KAValue("Built-In")},
+                  {"CoreAnimationFramesPerSecond", KAValue(60)},
+              });
+  const KAValue object(std::move(kamap));
+  for (auto& it : object.AsObject<KAMap>().ToMap()) {
+    // printf("key: %s\n", KAValue(it.first.c_str()).ToJson().c_str());
+    map.Put(KAValue(it.first.c_str()), 0);
+    // printf("value: %s\n", it.second.ToJson().c_str());
+    map.Put(it.second, 0);
+  }
+  ASSERT_TRUE(map.Contains(KAValue(12)));
+  ASSERT_FALSE(map.Contains(KAValue(13)));
 }

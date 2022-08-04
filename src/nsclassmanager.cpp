@@ -10,8 +10,8 @@ NSClassManager::NSClassManager()
   RegisterSerializer(name, cls::Serialize); \
   RegisterDeserializer(name, cls::Deserialize);
 
-  RegisterDeserializer("NSDictionary", NSDictionary::Deserialize);
-  RegisterDeserializer("NSMutableDictionary", NSDictionary::Deserialize);
+  REGISTER_SERIALIZERS("NSDictionary", NSDictionary);
+  REGISTER_SERIALIZERS("NSMutableDictionary", NSDictionary);
   REGISTER_SERIALIZERS("NSArray", NSArray);
   REGISTER_SERIALIZERS("NSMutableArray", NSArray);
   RegisterDeserializer("NSSet", NSArray::Deserialize);

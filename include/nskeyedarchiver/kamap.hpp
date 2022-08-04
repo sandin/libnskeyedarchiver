@@ -121,7 +121,7 @@ class KAMap : public KAObject {
     return ss.str();
   }
 
-  ObjectMap& ToMap() { return map_; }
+  const ObjectMap& ToMap() const { return map_; }
   size_t Size() const { return map_.size(); }
   bool Empty() const { return map_.empty(); }
 

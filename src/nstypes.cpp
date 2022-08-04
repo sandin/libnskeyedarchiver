@@ -68,6 +68,30 @@ KAValue NSDictionary::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& cla
   return KAValue(map);
 }
 
+// static
+bool NSDictionary::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz,
+                             const KAValue& object) {
+  LOG_DEBUG("NSDictionary serialize\n");
+  const KAObject* obj = object.ToObject();
+  if (!obj->IsA(KAObject::Kind::MapKind)) {
+    LOG_ERROR("This KAObject is not a KAMap.\n");
+    return false;
+  }
+
+  const KAMap& kamap = object.AsObject<KAMap>();
+  const KAMap::ObjectMap& map = kamap.ToMap();
+  std::vector<KAValue> keys;
+  std::vector<std::reference_wrapper<const KAValue>> values;
+  for (auto& it : map) {
+    keys.emplace_back(KAValue(it.first.c_str()));  // TODO: int type key?
+    values.emplace_back(it.second);
+  }
+
+  encoder->EncodeArrayOfObjects(keys, "NS.keys");
+  encoder->EncodeArrayOfObjectRefs(values, "NS.objects");
+  return true;
+}
+
 /* -- NSArray -- */
 
 // static
@@ -93,7 +117,7 @@ bool NSArray::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KA
   }
 
   const KAArray& array = object.AsObject<KAArray>();
-  encoder->EncodeArrayOfObjects(array, "NS.objects");
+  encoder->EncodeArrayOfObjects(array.ToArray(), "NS.objects");
   return true;
 }
 

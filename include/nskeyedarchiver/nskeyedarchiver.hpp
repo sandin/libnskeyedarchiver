@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 
+#include <functional>
 #include <map>
 #include <stack>
 #include <string>
@@ -45,7 +46,7 @@ class NSKeyedArchiverUID {
 
   ~NSKeyedArchiverUID() {}
 
-  bool IsValid() const { return value_ == kInvalidNSKeyedArchiverUID; }
+  bool IsValid() const { return value_ != kInvalidNSKeyedArchiverUID; }
 
   uint64_t Value() const { return static_cast<uint64_t>(value_); }
 
@@ -58,18 +59,58 @@ class NSKeyedArchiverUID {
   int64_t value_;
 };  // class NSKeyedArchiverUID
 
+template <typename ValueType>
+class KAValueUIDMap {
+ public:
+  using KAValueRef = std::reference_wrapper<const KAValue>;
+
+  void Put(const KAValue& key, const ValueType& value) {
+    int bucket_id = static_cast<int>(key.GetDataType());
+    buckets_[bucket_id].emplace_back(std::make_pair(KAValueRef(key), value));  // ref
+  }
+
+  const ValueType& Get(const KAValue& key, const ValueType& def_val) {
+    int bucket_id = static_cast<int>(key.GetDataType());
+    for (const auto& it : buckets_[bucket_id]) {
+      if (key.Equals(it.first)) {
+        return it.second;
+      }
+    }
+    return def_val;
+  }
+
+  bool Contains(const KAValue& key) {
+    int bucket_id = static_cast<int>(key.GetDataType());
+    for (const auto& it : buckets_[bucket_id]) {
+      if (key.Equals(it.first)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+ private:
+  std::vector<std::pair<KAValueRef, ValueType>> buckets_[KAValue::DataType::Count];
+};
+
 class NSKeyedArchiver {
  public:
-  using ObjectRef = plist_t;  // TYPE: PLIST_UID
-  using ObjectUidMap = std::map<KAValue, NSKeyedArchiverUID, KAValueComparator>;
+  using ObjectRef = plist_t;                               // TYPE: PLIST_UID
+  using ObjectUidMap = KAValueUIDMap<NSKeyedArchiverUID>;  // std::map<KAValue, NSKeyedArchiverUID,
+                                                           // // KAValueComparator>; // TODO: can we
+                                                           // avoid copying KAValue here?
   using ClassUidMap = std::map<std::string, NSKeyedArchiverUID>;
+  using ObjectArray = const std::vector<KAValue>&;
+  using ObjectRefArray = const std::vector<std::reference_wrapper<const KAValue>>&;
+
   enum OutputFormat { Xml, Binary };
 
   NSKeyedArchiver(NSClassManager* class_manager);
   virtual ~NSKeyedArchiver();
 
   void EncodeObject(const KAValue& object, const std::string& key);
-  void EncodeArrayOfObjects(const KAArray& array, const std::string& key);
+  void EncodeArrayOfObjects(ObjectArray array, const std::string& key);
+  void EncodeArrayOfObjectRefs(ObjectRefArray array, const std::string& key);
 
   // Caller is responsible for freeing the output data.
   void GetEncodedData(char** data, size_t* size);
@@ -83,6 +124,7 @@ class NSKeyedArchiver {
  private:
   ObjectRef EncodeObject(const KAValue& object);
   NSKeyedArchiverUID ReferenceObject(const KAValue& object);
+  NSKeyedArchiverUID GetReferencedObjectUid(const KAValue& object);
   NSKeyedArchiverUID ReferenceClass(const NSClass& clazz);
 
   plist_t EncodeClass(const NSClass& clazz);
@@ -105,8 +147,6 @@ class NSKeyedArchiver {
   NSClassManager::Serializer& FindClassSerializer(const NSClass& clazz) const;
 
   std::string NextGenericKey();
-
-  bool HaveVisited(const KAValue& object);
 
   bool HasError() const { error_.empty(); };
   const std::string& Error() const { return error_; }

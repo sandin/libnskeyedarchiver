@@ -20,6 +20,7 @@ class NSDummy {
 
 class NSDictionary {
  public:
+  static bool Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 
