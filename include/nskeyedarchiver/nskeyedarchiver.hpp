@@ -148,7 +148,7 @@ class NSKeyedArchiver {
 
   std::string NextGenericKey();
 
-  bool HasError() const { return error_.empty(); }
+  bool HasError() const { return !error_.empty(); }
   const std::string& Error() const { return error_; }
 
   void SetOutputFormat(OutputFormat output_format) { output_format_ = output_format; }

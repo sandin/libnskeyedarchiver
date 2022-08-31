@@ -31,6 +31,7 @@ bool NSKeyedArchiver::ArchivedData(const KAValue& object, char** data, size_t* s
     archiver.GetEncodedData(data, size);
     return true;
   }
+  NSKEYEDARCHIVER_LOG_ERROR("can not archive data, error: %s.\n", archiver.Error().c_str());
   return false;
 }
 
