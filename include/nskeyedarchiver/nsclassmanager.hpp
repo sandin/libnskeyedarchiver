@@ -27,7 +27,9 @@ class NSClassManager {
   }
 
   void RegisterSerializer(const std::string& class_name, Serializer serializer);
+  void UnregisterSerializer(const std::string& class_name);
   void RegisterDeserializer(const std::string& class_name, Deserializer deserializer);
+  void UnregisterDeserializer(const std::string& class_name);
 
   bool HasSerializer(const std::string& class_name);
   bool HasDeserializer(const std::string& class_name);

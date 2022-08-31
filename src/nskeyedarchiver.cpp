@@ -39,7 +39,7 @@ void NSKeyedArchiver::EncodeObject(const KAValue& object, const std::string& key
   if (object_ref != nullptr) {
     SetObjectInCurrentEncodingContext(object_ref, key, !key.empty());
   } else {
-    LOG_ERROR("can not encode object for key: %s.\n", key.c_str());
+    NSKEYEDARCHIVER_LOG_ERROR("can not encode object for key: %s.\n", key.c_str());
   }
 }
 
@@ -68,7 +68,7 @@ void NSKeyedArchiver::EncodeValue(ObjectRef plist, const std::string& key) {
 NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) {
   NSKeyedArchiverUID object_uid = GetReferencedObjectUid(object);
   bool have_visited = object_uid.IsValid() || object.IsNull();  // always have a null reference
-  LOG_DEBUG("object=%s, have_visited=%d.\n", object.ToJson().c_str(), have_visited);
+  NSKEYEDARCHIVER_LOG_DEBUG("object=%s, have_visited=%d.\n", object.ToJson().c_str(), have_visited);
   if (!object_uid.IsValid()) {
     // first time to visit this object
     object_uid = ReferenceObject(object);
@@ -76,7 +76,7 @@ NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) 
   if (!have_visited) {
     plist_t encoding_object = nullptr;
     if (IsContainer(object)) {
-      LOG_DEBUG("Is Container\n");
+      NSKEYEDARCHIVER_LOG_DEBUG("Is Container\n");
 
       const NSClass clazz = GetNSClass(object);
       NSClassManager::Serializer& serializer = FindClassSerializer(clazz);
@@ -90,14 +90,14 @@ NSKeyedArchiver::ObjectRef NSKeyedArchiver::EncodeObject(const KAValue& object) 
       encoding_object = ctx.dict;
       PopEncodingContext();
     } else {
-      LOG_DEBUG("Is Primitive\n");
+      NSKEYEDARCHIVER_LOG_DEBUG("Is Primitive\n");
       encoding_object = EncodePrimitive(object);  // TODO: do we need wrap it with a reference?
     }
 
     // repleace the placeholder with the object just encoded
     SetObject(object_uid, encoding_object);
   } else {
-    LOG_DEBUG("this object has been visited. object=%s\n", object.ToJson().c_str());
+    NSKEYEDARCHIVER_LOG_DEBUG("this object has been visited. object=%s\n", object.ToJson().c_str());
   }
 
   // NOTE: even two uid are equal, we always create a new UID plist object as the reference of
@@ -124,7 +124,7 @@ plist_t NSKeyedArchiver::EncodePrimitive(const KAValue& object) {
     }
     case KAValue::Object:  // fallthrough
     default:
-      ASSERT(false, "unsupport encode KAValue type as primitive: %d.\n", object.GetDataType());
+      NSKEYEDARCHIVER_ASSERT(false, "unsupport encode KAValue type as primitive: %d.\n", object.GetDataType());
       return nullptr;
   }
 }
@@ -135,7 +135,7 @@ NSClassManager::Serializer& NSKeyedArchiver::FindClassSerializer(const NSClass& 
       return class_manager_->GetSerializer(clazz.class_name);
     }
   }
-  LOG_ERROR("Can not find the Serializer for class name: `%s`.\n", clazz.class_name.c_str());
+  NSKEYEDARCHIVER_LOG_ERROR("Can not find the Serializer for class name: `%s`.\n", clazz.class_name.c_str());
   return class_manager_->GetDefaultSerializer();
 }
 
@@ -144,6 +144,7 @@ NSClass NSKeyedArchiver::GetNSClass(const KAValue& object) const {
     const KAObject* inner_obj = object.ToObject();
     return NSClass{inner_obj->ClassName(), inner_obj->Classes(), {/* classhints */}};
   }
+  return NSClass(); // with empty class name
 }
 
 bool NSKeyedArchiver::IsContainer(const KAValue& object) const { return object.IsObject(); }
@@ -205,7 +206,7 @@ void NSKeyedArchiver::SetObject(NSKeyedArchiverUID uid, plist_t encoding_object)
 }
 
 EncodingContext& NSKeyedArchiver::CurrentEncodingContext() {
-  ASSERT(!containers_.empty(), "the containers_ can not be empty.\n");
+  NSKEYEDARCHIVER_ASSERT(!containers_.empty(), "the containers_ can not be empty.\n");
   return containers_.top();
 }
 
@@ -261,7 +262,7 @@ void NSKeyedArchiver::GetEncodedData(char** data, size_t* size) {
   } else if (output_format_ == OutputFormat::Binary) {
     plist_to_bin(plist_, data, (uint32_t*)size);
   } else {
-    ASSERT(false, "unsupport output format: %d.\n", output_format_);
+    NSKEYEDARCHIVER_ASSERT(false, "unsupport output format: %d.\n", output_format_);
   }
 }
 
@@ -272,7 +273,7 @@ plist_t NSKeyedArchiver::FinishEncoding() {
   plist_dict_set_item(plist, "$archiver", plist_new_string(kNSKeyedArchiveName));
 
   plist_t top = plist_new_dict();
-  ASSERT(containers_.size() == 1, "the stack has more the one item.\n");
+  NSKEYEDARCHIVER_ASSERT(containers_.size() == 1, "the stack has more the one item.\n");
   EncodingContext& ctx = CurrentEncodingContext();
   /*
   for (auto kv : ctx.dict) {

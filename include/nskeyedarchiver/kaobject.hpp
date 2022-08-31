@@ -15,7 +15,7 @@ class KAObject {
 
   KAObject(Kind kind, const std::string& class_name, const std::vector<std::string>& classes)
       : kind_(kind), class_name_(class_name), classes_(classes) {
-    LOG_VERBOSE(
+    NSKEYEDARCHIVER_LOG_VERBOSE(
         "[%p] KAObject(Kind kind, const std::string& class_name, const "
         "std::vector<std::string>& classes), kind=%d, "
         "class_name=%s\n",
@@ -27,11 +27,11 @@ class KAObject {
   // copy constructor
   KAObject(const KAObject& other)
       : kind_(ObjectKind), class_name_(other.class_name_), classes_(other.classes_) {
-    LOG_VERBOSE("[%p] KAObject(const KAObject &other[%p])\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAObject(const KAObject &other[%p])\n", this, &other);
   }
   // copy assignment operator
   KAObject& operator=(const KAObject& other) {
-    LOG_VERBOSE("[%p] KAObject &operator=(const KAObject &other[%p)\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAObject &operator=(const KAObject &other[%p)\n", this, &other);
     class_name_ = other.class_name_;
     classes_ = other.classes_;
     return *this;
@@ -42,11 +42,11 @@ class KAObject {
       : kind_(other.kind_),
         class_name_(std::move(other.class_name_)),
         classes_(std::move(other.classes_)) {
-    LOG_VERBOSE("[%p] KAObject(KAObject &&other[%p])\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAObject(KAObject &&other[%p])\n", this, &other);
   }
   // move assignment operator
   KAObject& operator=(KAObject&& other) {
-    LOG_VERBOSE("[%p] KAObject &operator=(KAObject &&other[%p])\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAObject &operator=(KAObject &&other[%p])\n", this, &other);
     class_name_ = std::move(other.class_name_);
     classes_ = std::move(other.classes_);
     return *this;
@@ -62,7 +62,7 @@ class KAObject {
 
   virtual std::string ToJson() const { return "null"; }
 
-  virtual ~KAObject() { LOG_VERBOSE("[%p] ~KAObject, class_name=%s\n", this, class_name_.c_str()); }
+  virtual ~KAObject() { NSKEYEDARCHIVER_LOG_VERBOSE("[%p] ~KAObject, class_name=%s\n", this, class_name_.c_str()); }
 
   const std::string& ClassName() const { return class_name_; }
   const std::vector<std::string>& Classes() const { return classes_; }

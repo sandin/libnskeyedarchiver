@@ -17,7 +17,7 @@ class KAMap : public KAObject {
 
   KAMap(const std::string& class_name, const std::vector<std::string>& classes)
       : KAObject(MapKind, class_name, classes) {
-    LOG_VERBOSE(
+    NSKEYEDARCHIVER_LOG_VERBOSE(
         "[%p] KAMap(const std::string& class_name), "
         "class_name=%s\n",
         this, class_name_.c_str());
@@ -26,7 +26,7 @@ class KAMap : public KAObject {
   KAMap(const std::string& class_name, const std::vector<std::string>& classes,
         const ObjectMap& map)
       : KAObject(MapKind, class_name, classes), map_(map) {
-    LOG_VERBOSE(
+    NSKEYEDARCHIVER_LOG_VERBOSE(
         "[%p] KAMap(const std::string& class_name, const ObjectMap& map), "
         "class_name=%s\n",
         this, class_name_.c_str());
@@ -35,7 +35,7 @@ class KAMap : public KAObject {
   KAMap(const std::string& class_name, const std::vector<std::string>& classes,
         std::initializer_list<std::pair<const KeyType, KAValue>> list)
       : KAObject(MapKind, class_name, classes), map_(list) {
-    LOG_VERBOSE(
+    NSKEYEDARCHIVER_LOG_VERBOSE(
         "[%p] KAObject(const std::string& class_name, "
         "std::initializer_list<KVValue> list), class_name=%s\n",
         this, class_name_.c_str());
@@ -43,7 +43,7 @@ class KAMap : public KAObject {
   // move constructor for map
   KAMap(const std::string& class_name, const std::vector<std::string>& classes, ObjectMap&& map)
       : KAObject(MapKind, class_name, classes), map_(std::forward<ObjectMap>(map)) {
-    LOG_VERBOSE(
+    NSKEYEDARCHIVER_LOG_VERBOSE(
         "[%p] KAMap(const std::string& class_name, ObjectMap &&map), "
         "class_name=%s\n",
         this, class_name_.c_str());
@@ -51,11 +51,11 @@ class KAMap : public KAObject {
 
   // copy constructor
   KAMap(const KAMap& other) : KAMap(other.class_name_, other.classes_, other.map_) {
-    LOG_VERBOSE("[%p] KAMap(const KAMap &other[%p])\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAMap(const KAMap &other[%p])\n", this, &other);
   }
   // copy assignment operator
   KAMap& operator=(const KAMap& other) {
-    LOG_VERBOSE("[%p] KAMap &operator=(const KAMap &other[%p)\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAMap &operator=(const KAMap &other[%p)\n", this, &other);
     class_name_ = other.class_name_;
     classes_ = other.classes_;
     map_ = other.map_;
@@ -64,12 +64,12 @@ class KAMap : public KAObject {
 
   // move constructor
   KAMap(KAMap&& other) : KAObject(std::forward<KAObject>(other)), map_(std::move(other.map_)) {
-    LOG_VERBOSE("[%p] KAMap(KAMap &&other[%p])\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAMap(KAMap &&other[%p])\n", this, &other);
     // other.map_.clear();
   }
   // move assignment operator
   KAMap& operator=(KAMap&& other) {
-    LOG_VERBOSE("[%p] KAMap &operator=(KAMap &&other[%p])\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAMap &operator=(KAMap &&other[%p])\n", this, &other);
     class_name_ = std::move(other.class_name_);
     classes_ = std::move(other.classes_);
     map_ = std::move(other.map_);
@@ -79,7 +79,7 @@ class KAMap : public KAObject {
 
   // map[key] copy
   KAValue& operator[](const KeyType& key) {
-    LOG_VERBOSE("[%p] KAValue &operator[](const std::string &key), key=%s\n", this, key.c_str());
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue &operator[](const std::string &key), key=%s\n", this, key.c_str());
     return map_[key];
   }
   // map[key] move
@@ -91,12 +91,12 @@ class KAMap : public KAObject {
 
   virtual KAMap* Clone() const override { return new KAMap(*this); }
   virtual KAMap* CloneByMove(KAObject&& other) const override {
-    ASSERT(other.GetKind() == MapKind, "can not copy a difference kind object.\n");
+    NSKEYEDARCHIVER_ASSERT(other.GetKind() == MapKind, "can not copy a difference kind object.\n");
     return new KAMap(std::move(static_cast<KAMap&&>(other)));
   }
 
   virtual bool Equals(const KAObject& other) const override {
-    ASSERT(other.GetKind() == MapKind, "can not copy a difference kind object.\n");
+    NSKEYEDARCHIVER_ASSERT(other.GetKind() == MapKind, "can not copy a difference kind object.\n");
     const KAMap&& o = static_cast<const KAMap&&>(other);
     return kind_ == o.kind_ && class_name_ == o.class_name_ && classes_ == o.classes_ &&
            map_ == o.map_;

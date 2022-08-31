@@ -50,40 +50,40 @@ NSKeyedUnarchiver::NSKeyedUnarchiver(NSClassManager* class_manager, const char* 
   plist_t plist = nullptr;
   plist_from_bin(data, length, &plist);
   if (plist == nullptr) {
-    LOG_ERROR("Can not parse the binary plist.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("Can not parse the binary plist.\n");
     return;
   }
-#if DEBUG
+#if NSKEYEDARCHIVER_DEBUG
   print_plist_as_xml(plist);
 #endif
 
   if (!PLIST_IS_DICT(plist)) {
-    LOG_ERROR("Unable to read archive. the data may be corrupt.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("Unable to read archive. the data may be corrupt.\n");
     return;
   }
 
   plist_t archiver_node = plist_dict_get_item(plist, "$archiver");
   if (archiver_node == nullptr || plist_string_val_compare(archiver_node, "NSKeyedArchiver") != 0) {
-    LOG_ERROR("Unknown archiver. the data may be corrupt.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("Unknown archiver. the data may be corrupt.\n");
     return;
   }
 
   plist_t version_node = plist_dict_get_item(plist, "$version");
   if (version_node == nullptr ||
       plist_uint_val_compare(version_node, kNSKeyedArchivePlistVersion) != 0) {
-    LOG_ERROR("Unknown archiver version. the data may be corrupt.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("Unknown archiver version. the data may be corrupt.\n");
     return;
   }
 
   plist_t top_node = plist_dict_get_item(plist, "$top");
   if (!PLIST_IS_DICT(top_node)) {
-    LOG_ERROR("Unable to read archive contents. the data may be corrupt.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("Unable to read archive contents. the data may be corrupt.\n");
     return;
   }
 
   plist_t objects_node = plist_dict_get_item(plist, "$objects");
   if (!PLIST_IS_ARRAY(objects_node)) {
-    LOG_ERROR("Unable to read archive contents. the data may be corrupt.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("Unable to read archive contents. the data may be corrupt.\n");
     return;
   }
 
@@ -106,9 +106,9 @@ KAValue NSKeyedUnarchiver::DecodeObject(const std::string& key) {
   }
 
   plist_t node = ObjectInCurrentDecodingContext(key);
-  LOG_DEBUG("depth=%d, key=%s\n", CurrentDecodingContextDepth(), key.c_str());
+  NSKEYEDARCHIVER_LOG_DEBUG("depth=%d, key=%s\n", CurrentDecodingContextDepth(), key.c_str());
   if (node == nullptr) {
-    LOG_ERROR("No value found for key `%s`. The data may be corrupt.\n", key.c_str());
+    NSKEYEDARCHIVER_LOG_ERROR("No value found for key `%s`. The data may be corrupt.\n", key.c_str());
     return KAValue();  // null
   }
 
@@ -117,13 +117,13 @@ KAValue NSKeyedUnarchiver::DecodeObject(const std::string& key) {
 
 KAValue NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
   if (!PLIST_IS_UID(object_ref)) {
-    LOG_ERROR("Object is not a reference. The data may be corrupt.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("Object is not a reference. The data may be corrupt.\n");
     return KAValue();  // null
   }
 
   plist_t dereferenced_object = DereferenceObject(object_ref);
   if (dereferenced_object == nullptr) {
-    LOG_ERROR("Invalid object reference {TODO}. The data may be corrupt.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("Invalid object reference {TODO}. The data may be corrupt.\n");
     return KAValue();  // null
   }
   //#if DEBUG
@@ -136,10 +136,10 @@ KAValue NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
   }
 
   if (IsContainer(dereferenced_object)) {
-    LOG_DEBUG("Is Container\n");
+    NSKEYEDARCHIVER_LOG_DEBUG("Is Container\n");
     plist_t class_reference = plist_dict_get_item(dereferenced_object, "$class");
     if (!PLIST_IS_UID(class_reference)) {
-      LOG_ERROR("Invalid class reference {TODO}. The data may be corrupt.\n");
+      NSKEYEDARCHIVER_LOG_ERROR("Invalid class reference {TODO}. The data may be corrupt.\n");
       return KAValue();  // null;
     }
 
@@ -151,7 +151,7 @@ KAValue NSKeyedUnarchiver::DecodeObject(plist_t object_ref) {
 
     return deserializer(this, clazz);
   } else {
-    LOG_DEBUG("Is Primitive\n");
+    NSKEYEDARCHIVER_LOG_DEBUG("Is Primitive\n");
     return DecodePrimitive(dereferenced_object);
   }
 }
@@ -162,25 +162,25 @@ KAValue NSKeyedUnarchiver::DecodePrimitive(plist_t dereferenced_object) const {
     case PLIST_BOOLEAN: {
       uint8_t b;
       plist_get_bool_val(dereferenced_object, &b);
-      LOG_DEBUG("val=%d\n", b);
+      NSKEYEDARCHIVER_LOG_DEBUG("val=%d\n", b);
       return KAValue(static_cast<bool>(b));
     }
     case PLIST_UINT: {
       uint64_t u;
       plist_get_uint_val(dereferenced_object, &u);
-      LOG_DEBUG("val=%llu\n", u);
+      NSKEYEDARCHIVER_LOG_DEBUG("val=%llu\n", u);
       return KAValue(u);
     }
     case PLIST_REAL: {
       double d;
       plist_get_real_val(dereferenced_object, &d);
-      LOG_DEBUG("val=%f\n", d);
+      NSKEYEDARCHIVER_LOG_DEBUG("val=%f\n", d);
       return KAValue(d);
     }
     case PLIST_STRING: {
       char* c;
       plist_get_string_val(dereferenced_object, &c);
-      LOG_DEBUG("val=%s\n", c);
+      NSKEYEDARCHIVER_LOG_DEBUG("val=%s\n", c);
       KAValue value(c);
       free(c);
       return value;
@@ -189,7 +189,7 @@ KAValue NSKeyedUnarchiver::DecodePrimitive(plist_t dereferenced_object) const {
       char* d;
       uint64_t size;
       plist_get_data_val(dereferenced_object, &d, &size);
-      LOG_DEBUG("val=%p, size=%llu\n", d, size);
+      NSKEYEDARCHIVER_LOG_DEBUG("val=%p, size=%llu\n", d, size);
       KAValue::RawData* raw = new KAValue::RawData;
       raw->size = size;
       raw->data = static_cast<char*>(malloc(size));
@@ -206,7 +206,7 @@ KAValue NSKeyedUnarchiver::DecodePrimitive(plist_t dereferenced_object) const {
     case PLIST_UID:
     case PLIST_NONE:
     default:
-      LOG_ERROR("unsupport plist type %d.\n", type);
+      NSKEYEDARCHIVER_LOG_ERROR("unsupport plist type %d.\n", type);
       return KAValue();  // null
   }
 }
@@ -223,7 +223,7 @@ bool NSKeyedUnarchiver::IsContainer(plist_t node) const {
 plist_t NSKeyedUnarchiver::DereferenceObject(plist_t object_ref) const {
   uint64_t uid = 0;
   plist_get_uid_val(object_ref, &uid);
-  LOG_DEBUG("deref obj, uid=%llu, objects_size_=%u\n", uid, objects_size_);
+  NSKEYEDARCHIVER_LOG_DEBUG("deref obj, uid=%llu, objects_size_=%u\n", uid, objects_size_);
   if (0 <= uid && uid < objects_size_) {
     return plist_array_get_item(objects_, uid);
   }
@@ -260,7 +260,7 @@ NSClassManager::Deserializer& NSKeyedUnarchiver::FindClassDeserializer(const NSC
     }
   }
 
-  LOG_ERROR("Can not find the Deserializer for class name: `%s`.\n", clazz.class_name.c_str());
+  NSKEYEDARCHIVER_LOG_ERROR("Can not find the Deserializer for class name: `%s`.\n", clazz.class_name.c_str());
   return class_manager_->GetDefaultDeserializer();
 }
 
@@ -279,7 +279,7 @@ plist_t NSKeyedUnarchiver::ObjectInCurrentDecodingContext(const std::string& key
   } else {
     unwrapped_key = NextGenericKey();
   }
-  // LOG_DEBUG("key=%s, unwrapped_key=%s\n", key.c_str(),
+  // NSKEYEDARCHIVER_LOG_DEBUG("key=%s, unwrapped_key=%s\n", key.c_str(),
   // unwrapped_key.c_str());
 
   DecodingContext& ctx = CurrentDecodingContext();
@@ -287,7 +287,7 @@ plist_t NSKeyedUnarchiver::ObjectInCurrentDecodingContext(const std::string& key
 }
 
 DecodingContext& NSKeyedUnarchiver::CurrentDecodingContext() {
-  ASSERT(!containers_.empty(), "the containers_ can not be empty.\n");
+  NSKEYEDARCHIVER_ASSERT(!containers_.empty(), "the containers_ can not be empty.\n");
   return containers_.top();
 }
 
@@ -340,7 +340,7 @@ std::string NSKeyedUnarchiver::DecodeString(const std::string& key) {
     delete c;
     return str;
   }
-  LOG_ERROR("%s is not a string, node_type=%d\n", key.c_str(), plist_get_node_type(value_node));
+  NSKEYEDARCHIVER_LOG_ERROR("%s is not a string, node_type=%d\n", key.c_str(), plist_get_node_type(value_node));
   return "";  // TODO: throw exception?
 }
 
@@ -351,7 +351,7 @@ double NSKeyedUnarchiver::DecodeDouble(const std::string& key) {
     plist_get_real_val(value_node, &v);
     return v;
   }
-  LOG_ERROR("%s is not a double, node_type=%d\n", key.c_str(), plist_get_node_type(value_node));
+  NSKEYEDARCHIVER_LOG_ERROR("%s is not a double, node_type=%d\n", key.c_str(), plist_get_node_type(value_node));
   return v;
 }
 
@@ -362,6 +362,6 @@ uint64_t NSKeyedUnarchiver::DecodeInteger(const std::string& key) {
     plist_get_uint_val(value_node, &v);
     return v;
   }
-  LOG_ERROR("%s is not a integer, node_type=%d\n", key.c_str(), plist_get_node_type(value_node));
+  NSKEYEDARCHIVER_LOG_ERROR("%s is not a integer, node_type=%d\n", key.c_str(), plist_get_node_type(value_node));
   return v;
 }

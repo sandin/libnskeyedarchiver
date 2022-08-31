@@ -24,13 +24,13 @@ bool NSDummy::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KA
 
 // static
 KAValue NSDictionary::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
-  LOG_DEBUG("NSDictionary deserialize\n");
+  NSKEYEDARCHIVER_LOG_DEBUG("NSDictionary deserialize\n");
   if (!decoder->ContainsValue("NS.keys")) {
-    LOG_ERROR("missing NS.keys.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("missing NS.keys.\n");
     return KAValue();  // null
   }
   if (!decoder->ContainsValue("NS.objects")) {
-    LOG_ERROR("missing NS.objects.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("missing NS.objects.\n");
     return KAValue();  // null
   }
 
@@ -40,7 +40,7 @@ KAValue NSDictionary::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& cla
   size_t keys_size = keys.size();
   size_t values_size = values.size();
   if (keys_size != values_size) {
-    LOG_ERROR("values size(%lu) and keys size(%lu) are not equal.\n", values_size, keys_size);
+    NSKEYEDARCHIVER_LOG_ERROR("values size(%lu) and keys size(%lu) are not equal.\n", values_size, keys_size);
     return KAValue();  // null
   }
 
@@ -55,7 +55,7 @@ KAValue NSDictionary::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& cla
       map[std::to_string(key.ToInteger())] = values[i];
     } else {
       // actually, any KAValue can be used as a key, we just haven't implemented it yet.
-      LOG_ERROR(
+      NSKEYEDARCHIVER_LOG_ERROR(
           "we only support string/integer type keys for now, unsupport type: %d, index: %d key: "
           "%s.\n",
           key.GetDataType(), i, key.ToJson().c_str());
@@ -70,10 +70,10 @@ KAValue NSDictionary::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& cla
 // static
 bool NSDictionary::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz,
                              const KAValue& object) {
-  LOG_DEBUG("NSDictionary serialize\n");
+  NSKEYEDARCHIVER_LOG_DEBUG("NSDictionary serialize\n");
   const KAObject* obj = object.ToObject();
   if (!obj->IsA(KAObject::Kind::MapKind)) {
-    LOG_ERROR("This KAObject is not a KAMap.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("This KAObject is not a KAMap.\n");
     return false;
   }
 
@@ -95,9 +95,9 @@ bool NSDictionary::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz,
 
 // static
 KAValue NSArray::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
-  LOG_DEBUG("NSArray deserialize\n");
+  NSKEYEDARCHIVER_LOG_DEBUG("NSArray deserialize\n");
   if (!decoder->ContainsValue("NS.objects")) {
-    LOG_ERROR("missing NS.objects.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("missing NS.objects.\n");
     return KAValue();  // null
   }
 
@@ -108,10 +108,10 @@ KAValue NSArray::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
 
 // static
 bool NSArray::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
-  LOG_DEBUG("NSArray serialize\n");
+  NSKEYEDARCHIVER_LOG_DEBUG("NSArray serialize\n");
   const KAObject* obj = object.ToObject();
   if (!obj->IsA(KAObject::Kind::ArrayKind)) {
-    LOG_ERROR("This KAObject is not a KAArray.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("This KAObject is not a KAArray.\n");
     return false;
   }
 
@@ -124,9 +124,9 @@ bool NSArray::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KA
 
 // static
 KAValue NSString::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
-  LOG_DEBUG("NSString deserialize\n");
+  NSKEYEDARCHIVER_LOG_DEBUG("NSString deserialize\n");
   if (!decoder->ContainsValue("NS.string")) {
-    LOG_ERROR("missing NS.string.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("missing NS.string.\n");
     return KAValue();  // null
   }
 
@@ -139,9 +139,9 @@ KAValue NSString::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) 
 
 // static
 KAValue NSDate::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
-  LOG_DEBUG("NSDate deserialize\n");
+  NSKEYEDARCHIVER_LOG_DEBUG("NSDate deserialize\n");
   if (!decoder->ContainsValue("NS.time")) {
-    LOG_ERROR("missing NS.time.\n");
+    NSKEYEDARCHIVER_LOG_ERROR("missing NS.time.\n");
     return KAValue();  // null
   }
 
@@ -157,7 +157,7 @@ KAValue NSDate::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
 
 // static
 KAValue NSNull::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
-  LOG_DEBUG("NSNull deserialize\n");
+  NSKEYEDARCHIVER_LOG_DEBUG("NSNull deserialize\n");
   return KAValue();  // null
 }
 
@@ -165,7 +165,7 @@ KAValue NSNull::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
 
 // static
 KAValue NSError::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
-  LOG_DEBUG("NSError deserialize\n");
+  NSKEYEDARCHIVER_LOG_DEBUG("NSError deserialize\n");
 
   uint64_t code = decoder->DecodeInteger("NSCode");
   KAValue domain = decoder->DecodeObject("NSDomain");
@@ -184,7 +184,7 @@ KAValue NSError::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
 
 // static
 KAValue DTSysmonTapMessage::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
-  LOG_DEBUG("DTSysmonTapMessage deserialize\n");
+  NSKEYEDARCHIVER_LOG_DEBUG("DTSysmonTapMessage deserialize\n");
 
   KAValue plist = decoder->DecodeObject("DTTapMessagePlist");
   KAMap fields(clazz.class_name, clazz.classes,

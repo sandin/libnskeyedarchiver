@@ -35,11 +35,11 @@ class KAValue {
   KAValue() : t_(DataType::Null) {}
 
   explicit KAValue(uint64_t u) : t_(DataType::Integer) {
-    LOG_VERBOSE("[%p] KAValue(uint64 u), u=%llu\n", this, u);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(uint64 u), u=%llu\n", this, u);
     d_.u = u;
   }
   KAValue& operator=(uint64_t u) {
-    LOG_VERBOSE("[%p] KAValue &operator=(uint64_t u), u=%llu\n", this, u);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue &operator=(uint64_t u), u=%llu\n", this, u);
     t_ = DataType::Integer;
     d_.u = u;
     return *this;
@@ -54,33 +54,33 @@ class KAValue {
   KAValue& operator=(int32_t u) { return operator=(static_cast<uint64_t>(u)); }
 
   explicit KAValue(bool b) : t_(DataType::Bool) {
-    LOG_VERBOSE("[%p] KAValue(bool b), b=%d\n", this, b);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(bool b), b=%d\n", this, b);
     d_.b = b;
   }
   KAValue& operator=(bool b) {
-    LOG_VERBOSE("[%p] KAValue &operator=(bool b), b=%d\n", this, b);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue &operator=(bool b), b=%d\n", this, b);
     t_ = DataType::Bool;
     d_.b = b;
     return *this;
   }
 
   explicit KAValue(double d) : t_(DataType::Double) {
-    LOG_VERBOSE("[%p] KAValue(double d), d=%f\n", this, d);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(double d), d=%f\n", this, d);
     d_.d = d;
   }
   KAValue& operator=(double d) {
-    LOG_VERBOSE("[%p] KAValue& operator=(double d), d=%f\n", this, d);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue& operator=(double d), d=%f\n", this, d);
     t_ = DataType::Double;
     d_.d = d;
     return *this;
   }
 
   explicit KAValue(const char* s) : t_(DataType::Str) {
-    LOG_VERBOSE("[%p] KAValue(const char * s), s=\"%s\"\n", this, s);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(const char * s), s=\"%s\"\n", this, s);
     d_.s = strdup(s);
   }
   KAValue& operator=(const char* s) {
-    LOG_VERBOSE("[%p] KAValue &operator=(const char * s), s=\"%s\")\n", this, s);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue &operator=(const char * s), s=\"%s\")\n", this, s);
     t_ = DataType::Str;
     d_.s = strdup(s);
     return *this;
@@ -95,45 +95,45 @@ class KAValue {
   }
 
   explicit KAValue(RawData* r) : t_(DataType::Raw) {
-    LOG_VERBOSE("[%p] KAValue(RawData* r)\n", this);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(RawData* r)\n", this);
     d_.r = r;
   }
   explicit KAValue(const RawData& r) : t_(DataType::Raw) {
-    LOG_VERBOSE("[%p] KAValue(const RawData& r)\n", this);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(const RawData& r)\n", this);
     d_.r = CloneRawData(&r);  // copy
   }
   // copy assignment operator(for KAObject)
   KAValue& operator=(const RawData& r) {
-    LOG_VERBOSE("[%p] KAValue &operator=(const RawData &r)\n", this);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue &operator=(const RawData &r)\n", this);
     t_ = DataType::Raw;
     d_.r = CloneRawData(&r);  // copy
     return *this;
   }
 
   explicit KAValue(KAObject* object) : t_(DataType::Object) {
-    LOG_VERBOSE("[%p] KAValue(KAObject* object)\n", this);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(KAObject* object)\n", this);
     d_.o = object;
   }
   // copy object
   explicit KAValue(const KAObject& object) : t_(DataType::Object) {
-    LOG_VERBOSE("[%p] KAValue(const KAObject &object)\n", this);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(const KAObject &object)\n", this);
     d_.o = object.Clone();
   }
   // copy assignment operator(for KAObject)
   KAValue& operator=(const KAObject& object) {
-    LOG_VERBOSE("[%p] KAValue &operator=(const KAObject &object)\n", this);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue &operator=(const KAObject &object)\n", this);
     t_ = DataType::Object;
     d_.o = object.Clone();
     return *this;
   }
   // move object
   KAValue(KAObject&& object) : t_(DataType::Object) {
-    LOG_VERBOSE("[%p] KAValue(KAObject &&object)\n", this);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(KAObject &&object)\n", this);
     d_.o = object.CloneByMove(std::move(object));  // new KAMap(std::move(object))
   }
   // move assignment operator（for KAObject)
   KAValue& operator=(KAObject&& object) {
-    LOG_VERBOSE("[%p] KAValue &operator=(KAObject &&object)\n", this);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue &operator=(KAObject &&object)\n", this);
     t_ = DataType::Object;
     d_.o = object.CloneByMove(std::move(object));  // new KAMap(std::move(object))
     return *this;
@@ -141,7 +141,7 @@ class KAValue {
 
   // copy constructor
   KAValue(const KAValue& other) : t_(other.t_) {
-    LOG_VERBOSE("[%p] KAValue(const KAValue &other), other=[%p]\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(const KAValue &other), other=[%p]\n", this, &other);
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
     } else if (t_ == DataType::Raw) {
@@ -154,7 +154,7 @@ class KAValue {
   }
   // copy assignment operator
   KAValue& operator=(const KAValue& other) {
-    LOG_VERBOSE("[%p] KAValue &operator=(const KAValue &other), other=[%p]\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue &operator=(const KAValue &other), other=[%p]\n", this, &other);
     t_ = other.t_;
     if (t_ == DataType::Str) {
       d_.s = strdup(other.d_.s);  // copy char*
@@ -169,7 +169,7 @@ class KAValue {
   }
   // move constructor
   KAValue(KAValue&& other) : t_(other.t_) {
-    LOG_VERBOSE("[%p] KAValue(KAValue &&other), other=[%p]\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue(KAValue &&other), other=[%p]\n", this, &other);
     if (t_ == DataType::Str) {
       d_.s = other.d_.s;  // move char*
       other.d_.s = nullptr;
@@ -186,7 +186,7 @@ class KAValue {
   }
   // move assignment operator
   KAValue& operator=(KAValue&& other) {
-    LOG_VERBOSE("[%p] KAValue &operator=(KAValue &&other), other=[%p]\n", this, &other);
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] KAValue &operator=(KAValue &&other), other=[%p]\n", this, &other);
     t_ = other.t_;
     if (t_ == DataType::Str) {
       d_.s = other.d_.s;  // move char*
@@ -232,7 +232,7 @@ class KAValue {
   inline bool operator==(const KAValue& rhs) { return Equals(rhs); }
 
   ~KAValue() {
-    LOG_VERBOSE("[%p] ~KAValue, %s\n", this, ToJson().c_str());
+    NSKEYEDARCHIVER_LOG_VERBOSE("[%p] ~KAValue, %s\n", this, ToJson().c_str());
     if (t_ == DataType::Str) {
       if (d_.s) {
         free(d_.s);
@@ -273,7 +273,7 @@ class KAValue {
       case DataType::Object:
         return d_.o->ToJson();
       default:
-        ASSERT(false, "unsupported t_: %d.\n", t_);
+        NSKEYEDARCHIVER_ASSERT(false, "unsupported t_: %d.\n", t_);
     }
   }
 

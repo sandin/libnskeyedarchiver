@@ -9,39 +9,41 @@
 #include "plist/plist.h"
 
 #ifdef NDEBUG
-#define DEBUG 0
-#define LOG_LEVEL 0
+#define NSKEYEDARCHIVER_DEBUG 0
+#define NSKEYEDARCHIVER_LOG_LEVEL 0
 #else
-#define DEBUG 1
-#define LOG_LEVEL 2
+#define NSKEYEDARCHIVER_DEBUG 1
+#define NSKEYEDARCHIVER_LOG_LEVEL 2
 #endif
 
-#if LOG_LEVEL >= 0
-#define LOG_ERROR(fmt, ...) \
+#if NSKEYEDARCHIVER_LOG_LEVEL >= 0
+#define NSKEYEDARCHIVER_LOG_ERROR(fmt, ...) \
   fprintf(stderr, "[ERROR] %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
-#define LOG_ERROR(fmt, ...)
+#define NSKEYEDARCHIVER_LOG_ERROR(fmt, ...)
 #endif
-#if LOG_LEVEL >= 1
-#define LOG_INFO(fmt, ...) \
+#if NSKEYEDARCHIVER_LOG_LEVEL >= 1
+#define NSKEYEDARCHIVER_LOG_INFO(fmt, ...) \
   printf("[INFO] %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
-#define LOG_INFO(fmt, ...)
+#define NSKEYEDARCHIVER_LOG_INFO(fmt, ...)
 #endif
-#if LOG_LEVEL >= 2
-#define LOG_DEBUG(fmt, ...) \
+#if NSKEYEDARCHIVER_LOG_LEVEL >= 2
+#define NSKEYEDARCHIVER_LOG_DEBUG(fmt, ...) \
   printf("[DEBUG] %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
-#define LOG_DEBUG(fmt, ...)
+#define NSKEYEDARCHIVER_LOG_DEBUG(fmt, ...)
 #endif
-#if LOG_LEVEL >= 3
-#define LOG_VERBOSE(fmt, ...) \
+#if NSKEYEDARCHIVER_LOG_LEVEL >= 3
+#define NSKEYEDARCHIVER_LOG_VERBOSE(fmt, ...) \
   printf("[VERBOSE] %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
-#define LOG_VERBOSE(fmt, ...)
+#define NSKEYEDARCHIVER_LOG_VERBOSE(fmt, ...)
 #endif
 
-#define ASSERT(exp, fmt, ...) if (!(exp)) { LOG_ERROR(fmt, ##__VA_ARGS__); } assert(exp)
+#define NSKEYEDARCHIVER_ASSERT(exp, fmt, ...) if (!(exp)) { NSKEYEDARCHIVER_LOG_ERROR(fmt, ##__VA_ARGS__); } assert(exp)
+
+namespace nskeyedarchiver {
 
 inline void print_plist_as_xml(plist_t node) {
   char* xml = nullptr;
@@ -92,5 +94,7 @@ inline void hexdump(void* addr, int len, int offset) {
   // And print the final ASCII bit.
   printf("  %s\n", buff);
 }
+
+} // namespace nskeyedarchiver
 
 #endif  // NSKEYEDARCHIVER_COMMON_H
