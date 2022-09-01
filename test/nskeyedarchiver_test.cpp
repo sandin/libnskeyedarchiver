@@ -209,6 +209,77 @@ TEST(NSKeyedArchiverTest, EncodeObject_NSArray) {
   ASSERT_STREQ("NSObject", plist_get_std_string(plist_array_get_item(classes, 1)).c_str());
 }
 
+TEST(NSKeyedArchiverTest, EncodeObject_NSMutableSet) {
+  KAArray arr("NSMutableSet", {"NSMutableSet", "Set", "NSObject"}, {KAValue(3), KAValue(36079887892856llu)});
+  const KAValue object(std::move(arr));
+
+  ARCHIVED_DATA(object);
+  ASSERT_EQ(5, OBJECTS_COUNT);
+  ASSERT_STREQ("$null", plist_get_std_string(GET_OBJECT(0)).c_str());
+
+  // root
+  plist_t item_1 = GET_OBJECT(1);
+  ASSERT_PLIST_TYPE_EQ(item_1, PLIST_DICT);
+
+  // NS.objects
+  plist_t ns_objects = plist_dict_get_item(item_1, "NS.objects");
+  ASSERT_PLIST_ARRAY_SIZE_EQ(ns_objects, 2);
+
+  // object #0
+  plist_t object_0 = GET_OBJECT_REF(plist_array_get_item(ns_objects, 0));
+  ASSERT_EQ(3, plist_get_integer(object_0));
+
+  // object #1
+  plist_t object_1 = GET_OBJECT_REF(plist_array_get_item(ns_objects, 1));
+  ASSERT_EQ(36079887892856llu, plist_get_integer(object_1));
+
+  // $class
+  plist_t ns_class_ref = plist_dict_get_item(item_1, "$class");
+  plist_t ns_class = GET_OBJECT_REF(ns_class_ref);
+  ASSERT_STREQ("NSMutableSet",
+               plist_get_std_string(plist_dict_get_item(ns_class, "$classname")).c_str());
+  plist_t classes = plist_dict_get_item(ns_class, "$classes");
+  ASSERT_PLIST_TYPE_EQ(classes, PLIST_ARRAY);
+  ASSERT_PLIST_ARRAY_SIZE_EQ(classes, 3);
+  ASSERT_STREQ("NSMutableSet", plist_get_std_string(plist_array_get_item(classes, 0)).c_str());
+  ASSERT_STREQ("Set", plist_get_std_string(plist_array_get_item(classes, 1)).c_str());
+  ASSERT_STREQ("NSObject", plist_get_std_string(plist_array_get_item(classes, 2)).c_str());
+}
+
+TEST(NSKeyedArchiverTest, EncodeObject_NSMutableString) {
+  KAMap map("NSMutableString", {"NSMutableString", "NSString", "NSObject"},
+            {
+                {"NS.string", KAValue("hello world")},
+            });
+  const KAValue object(std::move(map));
+
+  ARCHIVED_DATA(object);
+  ASSERT_EQ(4, OBJECTS_COUNT);
+  ASSERT_STREQ("$null", plist_get_std_string(GET_OBJECT(0)).c_str());
+
+  // root
+  plist_t item_1 = GET_OBJECT(1);
+  ASSERT_PLIST_TYPE_EQ(item_1, PLIST_DICT);
+
+  // NS.string
+  plist_t ns_string = plist_dict_get_item(item_1, "NS.string");
+  std::string string_node = plist_get_std_string(GET_OBJECT_REF(ns_string));
+  ASSERT_STREQ("hello world", string_node.c_str());
+
+  // $class
+  plist_t ns_class_ref = plist_dict_get_item(item_1, "$class");
+  plist_t ns_class = GET_OBJECT_REF(ns_class_ref);
+  ASSERT_STREQ("NSMutableString",
+               plist_get_std_string(plist_dict_get_item(ns_class, "$classname")).c_str());
+  plist_t classes = plist_dict_get_item(ns_class, "$classes");
+  ASSERT_PLIST_TYPE_EQ(classes, PLIST_ARRAY);
+  ASSERT_PLIST_ARRAY_SIZE_EQ(classes, 3);
+  ASSERT_STREQ("NSMutableString",
+               plist_get_std_string(plist_array_get_item(classes, 0)).c_str());
+  ASSERT_STREQ("NSString", plist_get_std_string(plist_array_get_item(classes, 1)).c_str());
+  ASSERT_STREQ("NSObject", plist_get_std_string(plist_array_get_item(classes, 2)).c_str());
+}
+
 TEST(NSKeyedArchiverTest, EncodeObject_NSDictionary) {
   KAMap map("NSMutableDictionary", {"NSMutableDictionary", "NSDictionary", "NSObject"},
             {

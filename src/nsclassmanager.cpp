@@ -14,13 +14,13 @@ NSClassManager::NSClassManager()
   REGISTER_SERIALIZERS("NSMutableDictionary", NSDictionary);
   REGISTER_SERIALIZERS("NSArray", NSArray);
   REGISTER_SERIALIZERS("NSMutableArray", NSArray);
-  RegisterDeserializer("NSSet", NSArray::Deserialize);
-  RegisterDeserializer("NSMutableSet", NSArray::Deserialize);
-  RegisterDeserializer("NSString", NSString::Deserialize);
-  RegisterDeserializer("NSMutableString", NSString::Deserialize);
-  RegisterDeserializer("NSDate", NSDate::Deserialize);
-  RegisterDeserializer("NSError", NSError::Deserialize);
-  RegisterDeserializer("NSNull", NSNull::Deserialize);
+  REGISTER_SERIALIZERS("NSSet", NSArray);
+  REGISTER_SERIALIZERS("NSMutableSet", NSArray);
+  REGISTER_SERIALIZERS("NSString", NSString);
+  REGISTER_SERIALIZERS("NSMutableString", NSString);
+  RegisterDeserializer("NSDate", NSDate::Deserialize); // TODO
+  RegisterDeserializer("NSError", NSError::Deserialize); // TODO
+  RegisterDeserializer("NSNull", NSNull::Deserialize); // TODO
 
   RegisterDeserializer("DTSysmonTapMessage", DTSysmonTapMessage::Deserialize);
 #undef REGISTER_SERIALIZERS

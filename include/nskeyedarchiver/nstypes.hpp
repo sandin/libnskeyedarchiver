@@ -32,26 +32,31 @@ class NSArray {
 
 class NSString {
  public:
+  static bool Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 
 class NSNull {
  public:
+  static bool Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 
 class NSDate {
  public:
+  static bool Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 
 class NSError {
  public:
+  static bool Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 
 class DTSysmonTapMessage {
  public:
+  static bool Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object);
   static KAValue Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz);
 };
 

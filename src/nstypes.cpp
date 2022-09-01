@@ -123,6 +123,21 @@ bool NSArray::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KA
 /* -- NSString -- */
 
 // static
+bool NSString::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
+  NSKEYEDARCHIVER_LOG_DEBUG("NSString serialize\n");
+  const KAObject* obj = object.ToObject();
+  if (!obj->IsA(KAObject::Kind::MapKind)) {
+    NSKEYEDARCHIVER_LOG_ERROR("This KAObject is not a KAMap.\n");
+    return false;
+  }
+
+  const KAMap& kamap = object.AsObject<KAMap>();
+  const KAMap::ObjectMap& map = kamap.ToMap();
+  encoder->EncodeObject(map.at("NS.string"), "NS.string");
+  return true;
+}
+
+// static
 KAValue NSString::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
   NSKEYEDARCHIVER_LOG_DEBUG("NSString deserialize\n");
   if (!decoder->ContainsValue("NS.string")) {
@@ -136,6 +151,11 @@ KAValue NSString::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) 
 }
 
 /* -- NSDate -- */
+
+// static
+bool NSDate::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
+  return false; // TODO
+}
 
 // static
 KAValue NSDate::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
@@ -156,12 +176,22 @@ KAValue NSDate::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
 /* -- NSNull -- */
 
 // static
+bool NSNull::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
+  return false; // TODO
+}
+
+// static
 KAValue NSNull::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
   NSKEYEDARCHIVER_LOG_DEBUG("NSNull deserialize\n");
   return KAValue();  // null
 }
 
 /* -- NSError -- */
+
+// static
+bool NSError::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
+  return false; // TODO
+}
 
 // static
 KAValue NSError::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
@@ -181,6 +211,11 @@ KAValue NSError::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
 }
 
 /* -- DTSysmonTapMessage -- */
+
+// static
+bool DTSysmonTapMessage::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const KAValue& object) {
+  return false; // TODO
+}
 
 // static
 KAValue DTSysmonTapMessage::Deserialize(NSKeyedUnarchiver* decoder, const NSClass& clazz) {
