@@ -133,7 +133,7 @@ bool NSString::Serialize(NSKeyedArchiver* encoder, const NSClass& clazz, const K
 
   const KAMap& kamap = object.AsObject<KAMap>();
   const KAMap::ObjectMap& map = kamap.ToMap();
-  encoder->EncodeObject(map.at("NS.string"), "NS.string");
+  encoder->EncodePrimitive(map.at("NS.string"), "NS.string");
   return true;
 }
 

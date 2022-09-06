@@ -109,6 +109,7 @@ class NSKeyedArchiver {
   virtual ~NSKeyedArchiver();
 
   void EncodeObject(const KAValue& object, const std::string& key);
+  void EncodePrimitive(const KAValue& object, const std::string& key);
   void EncodeArrayOfObjects(ObjectArray array, const std::string& key);
   void EncodeArrayOfObjectRefs(ObjectRefArray array, const std::string& key);
 

@@ -96,7 +96,6 @@ class KAMap : public KAObject {
   }
 
   virtual bool Equals(const KAObject& other) const override {
-    NSKEYEDARCHIVER_ASSERT(other.GetKind() == MapKind, "can not copy a difference kind object.\n");
     const KAMap&& o = static_cast<const KAMap&&>(other);
     return kind_ == o.kind_ && class_name_ == o.class_name_ && classes_ == o.classes_ &&
            map_ == o.map_;

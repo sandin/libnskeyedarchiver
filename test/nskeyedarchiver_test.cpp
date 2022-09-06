@@ -254,7 +254,7 @@ TEST(NSKeyedArchiverTest, EncodeObject_NSMutableString) {
   const KAValue object(std::move(map));
 
   ARCHIVED_DATA(object);
-  ASSERT_EQ(4, OBJECTS_COUNT);
+  ASSERT_EQ(3, OBJECTS_COUNT);
   ASSERT_STREQ("$null", plist_get_std_string(GET_OBJECT(0)).c_str());
 
   // root
@@ -263,7 +263,7 @@ TEST(NSKeyedArchiverTest, EncodeObject_NSMutableString) {
 
   // NS.string
   plist_t ns_string = plist_dict_get_item(item_1, "NS.string");
-  std::string string_node = plist_get_std_string(GET_OBJECT_REF(ns_string));
+  std::string string_node = plist_get_std_string(ns_string);
   ASSERT_STREQ("hello world", string_node.c_str());
 
   // $class

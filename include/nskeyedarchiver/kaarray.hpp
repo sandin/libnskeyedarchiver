@@ -84,7 +84,6 @@ class KAArray : public KAObject {
   }
 
   virtual bool Equals(const KAObject& other) const override {
-    NSKEYEDARCHIVER_ASSERT(other.GetKind() == ArrayKind, "can not copy a difference kind object.\n");
     const KAArray&& o = static_cast<const KAArray&&>(other);
     return kind_ == o.kind_ && class_name_ == o.class_name_ && classes_ == o.classes_ &&
            arr_ == o.arr_;

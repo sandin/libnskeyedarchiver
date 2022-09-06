@@ -10,12 +10,13 @@
 
 #ifdef NDEBUG
 #define NSKEYEDARCHIVER_DEBUG 0
-#define NSKEYEDARCHIVER_LOG_LEVEL 0
 #else
 #define NSKEYEDARCHIVER_DEBUG 1
-#define NSKEYEDARCHIVER_LOG_LEVEL 2
 #endif
 
+#ifndef NSKEYEDARCHIVER_LOG_LEVEL
+  #define NSKEYEDARCHIVER_LOG_LEVEL 1
+#endif
 #if NSKEYEDARCHIVER_LOG_LEVEL >= 0
 #define NSKEYEDARCHIVER_LOG_ERROR(fmt, ...) \
   fprintf(stderr, "[ERROR] %s:%d:%s(): " fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)

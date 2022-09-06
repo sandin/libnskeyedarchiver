@@ -44,6 +44,15 @@ void NSKeyedArchiver::EncodeObject(const KAValue& object, const std::string& key
   }
 }
 
+void NSKeyedArchiver::EncodePrimitive(const KAValue& object, const std::string& key) {
+  ObjectRef object_ref = EncodePrimitive(object);
+  if (object_ref != nullptr) {
+    SetObjectInCurrentEncodingContext(object_ref, key, !key.empty());
+  } else {
+    NSKEYEDARCHIVER_LOG_ERROR("can not encode primitive for key: %s.\n", key.c_str());
+  }
+}
+
 void NSKeyedArchiver::EncodeArrayOfObjects(const std::vector<KAValue>& array,
                                            const std::string& key) {
   plist_t object_refs = plist_new_array();
