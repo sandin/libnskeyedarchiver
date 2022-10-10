@@ -1,6 +1,58 @@
 # libnskeyedarchiver
 A library for encoding and decoding Apple's NSKeyedArchiver.
 
+## Building
+
+### Requirements
+
+```
+$ brew install cmake libplist
+$ brew install libimobiledevice
+#   ...
+#   Pouring libimobiledevice--1.3.0.monterey.bottle.tar.gz
+#   /usr/local/Cellar/libimobiledevice/1.3.0
+```
+
+To build the `NSKeyedArchiver` library, clone the repository and do `cmake` smoketest:
+
+```
+$ git clone git@github.com:sandin/libnskeyedarchiver.git
+Cloning into 'libnskeyedarchiver'...
+
+$ cd libnskeyedarchiver
+$ IMB_PKG_CONFIG_PATH=/usr/local/Cellar/libimobiledevice/1.3.0 cmake .
+
+#    -- Checking for module 'libplist-2.0'
+#    --   Found libplist-2.0, version 2.2.0
+#    -- Configuring done
+#    -- Generating done
+#    -- Build files have been written to: ~/dev/libnskeyedarchiver
+```
+
+This will build a target bundled with static library (`libnskeyedarchiver.a`):
+
+```
+$ IMB_PKG_CONFIG_PATH=/usr/local/Cellar/libimobiledevice/1.3.0 cmake --build . --target nskeyedarchiver
+[ 16%] Building CXX object CMakeFiles/nskeyedarchiver.dir/src/base64.cpp.o
+[ 33%] Building CXX object CMakeFiles/nskeyedarchiver.dir/src/nstypes.cpp.o
+...
+[100%] Linking CXX static library libnskeyedarchiver.a
+[100%] Built target nskeyedarchiver
+```
+
+
+This will build a `nskeyedarchiver_tools` Mach-O binary:
+
+```
+$ IMB_PKG_CONFIG_PATH=/usr/local/Cellar/libimobiledevice/1.3.0 cmake --build . --target nskeyedarchiver_tools
+...
+[ 87%] Building CXX object CMakeFiles/nskeyedarchiver_tools.dir/tools/main.cpp.o
+[100%] Linking CXX executable nskeyedarchiver_tools
+[100%] Built target nskeyedarchiver_tools
+```
+
+The final binaries will be in deployed in current working directory. Finally, you can move built binaries to newly created `/bin` directory (ie. `mv libnskeyedarchiver.a nskeyedarchiver_tools ./bin`).
+
 ## Usage
 
 ### Library
