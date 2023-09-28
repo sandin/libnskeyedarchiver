@@ -52,7 +52,7 @@ inline void print_plist_as_xml(plist_t node) {
   plist_to_xml(node, &xml, &xml_length);
   if (xml != nullptr) {
     printf("%s\n", xml);
-    plist_to_xml_free(xml);
+    plist_mem_free(xml);
   }
 }
 
