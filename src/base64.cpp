@@ -1,5 +1,7 @@
 #include "nskeyedarchiver/base64.hpp"
 
+#include <cstdint>
+
 static const char base64_chars[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"
